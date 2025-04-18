@@ -1,11 +1,12 @@
 [package]
-name = "open-erase"
+name = "open-erase-server"
 version = "0.1.0"
 edition = "2024"
 
 [dependencies]
 axum = "0.8.3"
-sqlx = { version = "0.8.5", features = ["postgres", "runtime-tokio", "tls-native-tls"] }
+dotenv = "0.15.0"
+sqlx = { version = "0.8.5", features = ["postgres", "runtime-tokio", "tls-rustls"] }
 tokio = { version = "1.44.2", features = ["macros", "rt-multi-thread"] }
 tower = "0.5.2"
 tower-http = { version = "0.6.2", features = ["compression-gzip", "timeout", "trace"] }
