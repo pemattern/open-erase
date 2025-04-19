@@ -2,6 +2,7 @@ services:
   open-erase-server:
     container_name: open-erase-server
     image: open-erase-server
+    env_file: ".env"
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}

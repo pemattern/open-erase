@@ -6,6 +6,5 @@ RUN cargo build --release
 
 FROM debian:bookworm-slim
 COPY --from=builder /open-erase/target/release/open-erase-server /open-erase-server
-COPY --from=builder /open-erase/.env /.env
 ENTRYPOINT [ "/open-erase-server" ]
 EXPOSE 3000
