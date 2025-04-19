@@ -2,7 +2,7 @@ mod migrations;
 
 use std::{env, time::Duration};
 
-use axum::Router;
+use axum::{Router, routing::get};
 use sqlx::postgres::PgPoolOptions;
 use tower::ServiceBuilder;
 use tower_http::{compression::CompressionLayer, timeout::TimeoutLayer, trace::TraceLayer};
@@ -13,15 +13,15 @@ async fn main() {
     let db_url = db_url_from_envs();
     let pool = PgPoolOptions::new().connect(&db_url).await.unwrap();
 
-    let app = Router::new().layer(
-        ServiceBuilder::new()
-            .layer(TraceLayer::new_for_http())
-            .layer(CompressionLayer::new())
-            .layer(TimeoutLayer::new(Duration::from_secs(5))),
-    );
-    let listener = tokio::net::TcpListener::bind("127.0.0.1:3000")
-        .await
-        .unwrap();
+    let app = Router::new()
+        .route("/", get(|| async { tracing::info!("Hello, World!") }))
+        .layer(
+            ServiceBuilder::new()
+                .layer(TraceLayer::new_for_http())
+                .layer(CompressionLayer::new())
+                .layer(TimeoutLayer::new(Duration::from_secs(5))),
+        );
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
     axum::serve(listener, app).await.unwrap();
 }
 
