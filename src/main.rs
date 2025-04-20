@@ -1,8 +1,9 @@
 mod migrations;
+mod routes;
 
 use std::{env, time::Duration};
 
-use axum::{Router, routing::get};
+use axum::{Extension, Router, routing::get};
 use sqlx::postgres::PgPoolOptions;
 use tower::ServiceBuilder;
 use tower_http::{compression::CompressionLayer, timeout::TimeoutLayer, trace::TraceLayer};
@@ -15,8 +16,10 @@ async fn main() {
 
     let app = Router::new()
         .route("/", get(|| async { tracing::info!("Hello, World!") }))
+        .merge(routes::jwt::router())
         .layer(
             ServiceBuilder::new()
+                .layer(Extension(pool))
                 .layer(TraceLayer::new_for_http())
                 .layer(CompressionLayer::new())
                 .layer(TimeoutLayer::new(Duration::from_secs(5))),
