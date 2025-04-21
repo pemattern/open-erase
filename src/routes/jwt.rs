@@ -1,6 +1,5 @@
-use chrono::{DateTime, Local, Utc};
+use chrono::Utc;
 use std::time::Duration;
-use uuid::Uuid;
 
 use axum::{
     Extension, Json, Router,
@@ -41,8 +40,6 @@ pub struct GetJWT {
 #[derive(Serialize, Deserialize, FromRow)]
 pub struct GetUser {
     pub uuid: String,
-    pub name: String,
-    pub password: String,
 }
 
 pub fn router() -> Router {
@@ -59,18 +56,19 @@ pub async fn new(
         issuer: "me".to_string(),
         validity_duration: 3600,
     };
-    let sub =
-        match sqlx::query_as::<_, GetUser>("SELECT * FROM users WHERE name = $1 AND password = $2")
-            .bind(authorization.username())
-            .bind(authorization.password())
-            .fetch_one(&pool)
-            .await
-        {
-            Ok(user) => user.uuid,
-            Err(_) => {
-                return StatusCode::UNAUTHORIZED.into_response();
-            }
-        };
+    let sub = match sqlx::query_as::<_, GetUser>(
+        "SELECT uuid FROM users WHERE name = $1 AND password = $2",
+    )
+    .bind(authorization.username())
+    .bind(authorization.password())
+    .fetch_one(&pool)
+    .await
+    {
+        Ok(user) => user.uuid,
+        Err(_) => {
+            return StatusCode::UNAUTHORIZED.into_response();
+        }
+    };
 
     let now = Utc::now();
     let iat = now.timestamp() as usize;

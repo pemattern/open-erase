@@ -4,6 +4,7 @@ mod routes;
 use std::{env, time::Duration};
 
 use axum::{Extension, Router, routing::get};
+use migrations::initialize_db;
 use sqlx::postgres::PgPoolOptions;
 use tower::ServiceBuilder;
 use tower_http::{compression::CompressionLayer, timeout::TimeoutLayer, trace::TraceLayer};
@@ -13,6 +14,7 @@ async fn main() {
     init_tracing_subscriber();
     let db_url = db_url_from_envs();
     let pool = PgPoolOptions::new().connect(&db_url).await.unwrap();
+    initialize_db(&pool).await.unwrap();
 
     let app = Router::new()
         .route("/", get(|| async { tracing::info!("Hello, World!") }))
