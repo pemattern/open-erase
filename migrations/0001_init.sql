@@ -1,7 +1,8 @@
 CREATE TABLE IF NOT EXISTS users (
-    uuid uuid PRIMARY KEY UNIQUE NOT NULL,
-    name varchar(24) UNIQUE NOT NULL,
-    password varchar(72) NOT NULL,
-    created_on timestamptz NOT NULL,
-    updated_on timestamptz NOT NULL
+    uuid UUID PRIMARY KEY,
+    email TEXT UNIQUE NOT NULL,
+    password TEXT NOT NULL,
+    salt TEXT NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL,
+    modified_at TIMESTAMPTZ NOT NULL,
 );
