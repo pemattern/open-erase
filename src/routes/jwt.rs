@@ -1,3 +1,4 @@
+use argon2::{Argon2, PasswordHash, PasswordVerifier};
 use chrono::Utc;
 use std::time::Duration;
 use uuid::Uuid;
@@ -16,7 +17,7 @@ use axum_extra::{
 };
 use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation, decode, encode};
 use serde::{Deserialize, Serialize};
-use sqlx::{PgPool, prelude::FromRow};
+use sqlx::{PgPool, prelude::FromRow, query_as};
 
 #[derive(Clone)]
 pub struct Config {
@@ -42,7 +43,9 @@ pub struct GetJWT {
 
 #[derive(Serialize, Deserialize, FromRow)]
 pub struct GetUser {
-    pub uuid: String,
+    pub uuid: Uuid,
+    pub name: String,
+    pub password_hash: String,
 }
 
 pub fn router() -> Router {
@@ -59,20 +62,28 @@ pub async fn new(
         issuer: "me".to_string(),
         validity_secs: 3600,
     };
-    let sub = match sqlx::query_as::<_, GetUser>(
-        "SELECT uuid FROM users WHERE name = $1 AND password = $2",
+    let user = match query_as::<_, GetUser>(
+        "SELECT uuid, name, password_hash FROM users WHERE name = $1 LIMIT 1",
     )
     .bind(authorization.username())
-    .bind(authorization.password())
     .fetch_one(&pool)
     .await
     {
-        Ok(user) => user.uuid,
+        Ok(user) => user,
         Err(_) => {
             return StatusCode::UNAUTHORIZED.into_response();
         }
     };
 
+    let parsed_hash = PasswordHash::new(&user.password_hash).unwrap();
+    if Argon2::default()
+        .verify_password(authorization.password().as_bytes(), &parsed_hash)
+        .is_err()
+    {
+        return StatusCode::UNAUTHORIZED.into_response();
+    }
+
+    let sub = user.uuid.to_string();
     let now = Utc::now();
     let iat = now.timestamp() as usize;
     let expires_at = now + Duration::from_secs(config.validity_secs);
@@ -124,15 +135,15 @@ pub async fn authorize(
 
     let jwt = authorization.trim_start_matches("Bearer ");
 
-    let claims =
-        match decode::<Claims>(&jwt, &key, &Validation::new(jsonwebtoken::Algorithm::HS256)) {
-            Ok(token_data) => token_data.claims,
-            Err(_) => return StatusCode::UNAUTHORIZED.into_response(),
-        };
+    let claims = match decode::<Claims>(jwt, &key, &Validation::new(jsonwebtoken::Algorithm::HS256))
+    {
+        Ok(token_data) => token_data.claims,
+        Err(_) => return StatusCode::UNAUTHORIZED.into_response(),
+    };
 
     let user = match Uuid::parse_str(&claims.sub) {
         Ok(uuid) => uuid,
-        Err(_) => return (StatusCode::BAD_REQUEST, "invalid user").into_response(),
+        Err(_) => return StatusCode::UNAUTHORIZED.into_response(),
     };
 
     request.extensions_mut().insert(user);

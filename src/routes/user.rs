@@ -1,4 +1,5 @@
 use crate::routes::jwt;
+use argon2::{password_hash::SaltString, Argon2, PasswordHasher};
 use axum::{
     Extension, Json, Router,
     http::StatusCode,
@@ -63,7 +64,7 @@ pub async fn post_user(Extension(pool): Extension<PgPool>, Json(user): Json<Post
     {
         Ok(_) => StatusCode::CREATED.into_response(),
         Err(sqlx::Error::Database(error)) => {
-            // Unique violation code
+    
             if error.code().unwrap() == "23505" {
                 StatusCode::CONFLICT.into_response()
             } else {
@@ -72,4 +73,11 @@ pub async fn post_user(Extension(pool): Extension<PgPool>, Json(user): Json<Post
         }
         Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
     }
+}
+
+pub fn hash_password<S: Into<String>>(password: S, salt: S) -> String {
+    let argon2 = Argon2::default();
+    let salt_string = SaltString::encode_b64(salt.into().as_bytes()).unwrap();
+    let password_hash = argon2.hash_password(password.into().as_bytes(), &salt_string).unwrap();
+    password_hash.to_string()
 }
