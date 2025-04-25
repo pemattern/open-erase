@@ -4,12 +4,8 @@ use std::time::Duration;
 use uuid::Uuid;
 
 use axum::{
-    Extension, Json, Router,
-    extract::Request,
-    http::StatusCode,
-    middleware::Next,
-    response::{IntoResponse, Response},
-    routing::get,
+    Extension, Json, Router, extract::Request, http::StatusCode, middleware::Next,
+    response::IntoResponse, routing::get,
 };
 use axum_extra::{
     TypedHeader,
@@ -19,13 +15,7 @@ use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation, decode, encode}
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, PgPool};
 
-#[derive(Clone)]
-pub struct Config {
-    pub secret: String,
-    pub issuer: String,
-    pub access_token_validity_secs: u64,
-    pub refresh_token_validity_secs: u64,
-}
+use crate::{ApiResult, config::Config, error::ErrorResponse};
 
 #[derive(Serialize, Deserialize)]
 pub struct Claims {
@@ -66,7 +56,7 @@ pub async fn login(
     Extension(pool): Extension<PgPool>,
     Extension(config): Extension<Config>,
     TypedHeader(authorization): TypedHeader<Authorization<Basic>>,
-) -> Response {
+) -> ApiResult {
     let mut transaction = pool.begin().await.unwrap();
     let user: GetUser = match sqlx::query_as(
         "SELECT uuid, name, password_hash FROM users WHERE name = $1 LIMIT 1;",
@@ -77,7 +67,7 @@ pub async fn login(
     {
         Ok(user) => user,
         Err(_) => {
-            return StatusCode::UNAUTHORIZED.into_response();
+            return ErrorResponse::unauthorized();
         }
     };
 
@@ -86,7 +76,7 @@ pub async fn login(
         .verify_password(authorization.password().as_bytes(), &parsed_hash)
         .is_err()
     {
-        return StatusCode::UNAUTHORIZED.into_response();
+        return ErrorResponse::unauthorized();
     }
 
     sqlx::query("DELETE FROM refresh_tokens WHERE user_uuid = $1;")
@@ -140,7 +130,7 @@ pub async fn login(
     match encode(&Header::default(), &access_token_claims, &key) {
         Ok(access_token) => {
             transaction.commit().await.unwrap();
-            (
+            Ok((
                 StatusCode::OK,
                 Json(LoginResponse {
                     access_token,
@@ -149,9 +139,9 @@ pub async fn login(
                     expires_in: config.access_token_validity_secs,
                 }),
             )
-                .into_response()
+                .into_response())
         }
-        Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+        Err(_) => ErrorResponse::internal_server_error(),
     }
 }
 
@@ -159,7 +149,7 @@ pub async fn authorize(
     Extension(config): Extension<Config>,
     mut request: Request,
     next: Next,
-) -> Response {
+) -> ApiResult {
     let secret = config.secret;
     let key = DecodingKey::from_secret(secret.as_bytes());
     let issuer = config.issuer;
@@ -168,16 +158,16 @@ pub async fn authorize(
 
     let authorization_header = match request.headers().get("Authorization") {
         Some(v) => v,
-        None => return StatusCode::UNAUTHORIZED.into_response(),
+        None => return ErrorResponse::unauthorized(),
     };
 
     let authorization = match authorization_header.to_str() {
         Ok(v) => v,
-        Err(_) => return StatusCode::UNAUTHORIZED.into_response(),
+        Err(_) => return ErrorResponse::unauthorized(),
     };
 
     if !authorization.starts_with("Bearer ") {
-        return StatusCode::UNAUTHORIZED.into_response();
+        return ErrorResponse::unauthorized();
     };
 
     let jwt = authorization.trim_start_matches("Bearer ");
@@ -185,14 +175,14 @@ pub async fn authorize(
     let claims = match decode::<Claims>(jwt, &key, &Validation::new(jsonwebtoken::Algorithm::HS256))
     {
         Ok(token_data) => token_data.claims,
-        Err(_) => return StatusCode::UNAUTHORIZED.into_response(),
+        Err(_) => return ErrorResponse::unauthorized(),
     };
 
     let user = match Uuid::parse_str(&claims.sub) {
         Ok(uuid) => uuid,
-        Err(_) => return StatusCode::UNAUTHORIZED.into_response(),
+        Err(_) => return ErrorResponse::unauthorized(),
     };
 
     request.extensions_mut().insert(user);
-    next.run(request).await
+    Ok(next.run(request).await)
 }

@@ -1,21 +1,24 @@
-mod migrations;
+mod config;
+mod error;
 mod routes;
 
 use std::{env, time::Duration};
 
-use axum::{Extension, Router, http::StatusCode, routing::get};
-use migrations::initialize_db;
+use axum::{Extension, Router, http::StatusCode, response::Response, routing::get};
+use error::ErrorResponse;
 use sqlx::postgres::PgPoolOptions;
 use tower::ServiceBuilder;
 use tower_http::{compression::CompressionLayer, timeout::TimeoutLayer, trace::TraceLayer};
 use tracing::Level;
 
+pub type ApiResult = Result<Response, ErrorResponse>;
+
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
     init_tracing_subscriber();
-    let db_url = db_url_from_envs();
-    let pool = PgPoolOptions::new().connect(&db_url).await.unwrap();
-    initialize_db(&pool).await.unwrap();
+    let db_url = db_url_from_envs()?;
+    let pool = PgPoolOptions::new().connect(&db_url).await?;
+    sqlx::migrate!("./migrations").run(&pool).await?;
 
     let app = Router::new()
         .route("/", get(health))
@@ -36,10 +39,13 @@ async fn main() {
                 .layer(TimeoutLayer::new(Duration::from_secs(5))),
         );
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
-    axum::serve(listener, app).await.unwrap();
+    axum::serve(listener, app).await?;
+    Ok(())
 }
 
 async fn health() -> Result<&'static str, StatusCode> {
+    // Should fail due to timeout layer
+    tokio::time::sleep(Duration::from_millis(6000)).await;
     Ok("UP")
 }
 
@@ -48,13 +54,13 @@ pub fn init_tracing_subscriber() {
     tracing::info!("initialized tracing subscriber");
 }
 
-pub fn db_url_from_envs() -> String {
-    let username = env::var("POSTGRES_USER").unwrap();
-    let password = env::var("POSTGRES_PASSWORD").unwrap();
-    let host = env::var("POSTGRES_HOST").unwrap();
-    let port = env::var("POSTGRES_PORT").unwrap();
-    let db = env::var("POSTGRES_DB").unwrap();
+pub fn db_url_from_envs() -> Result<String, Box<dyn std::error::Error>> {
+    let username = env::var("POSTGRES_USER")?;
+    let password = env::var("POSTGRES_PASSWORD")?;
+    let host = env::var("POSTGRES_HOST")?;
+    let port = env::var("POSTGRES_PORT")?;
+    let db = env::var("POSTGRES_DB")?;
     let url = format!("postgres://{username}:{password}@{host}:{port}/{db}");
     tracing::info!("db url: {url}");
-    url
+    Ok(url)
 }
