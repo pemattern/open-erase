@@ -1,4 +1,3 @@
-use crate::routes::jwt;
 use argon2::{password_hash::SaltString, Argon2, PasswordHasher};
 use axum::{
     Extension, Json, Router,
@@ -12,6 +11,8 @@ use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, postgres::PgPool};
 use tower::ServiceBuilder;
 use uuid::Uuid;
+
+use super::auth;
 
 #[derive(Serialize, Deserialize, FromRow)]
 pub struct GetUser {
@@ -31,7 +32,7 @@ pub struct PostUser {
 pub fn router() -> Router {
     Router::new()
         .route("/user", get(get_user).post(post_user))
-        .layer(ServiceBuilder::new().layer(middleware::from_fn(jwt::authorize)))
+        .layer(ServiceBuilder::new().layer(middleware::from_fn(auth::authorize)))
 }
 
 #[axum::debug_handler]
@@ -40,7 +41,7 @@ pub async fn get_user(
     Extension(user): Extension<Uuid>,
 ) -> Response {
     match sqlx::query_as::<_, GetUser>("SELECT * FROM users WHERE uuid = $1")
-        .bind(&user)
+        .bind(user)
         .fetch_one(&pool)
         .await
     {

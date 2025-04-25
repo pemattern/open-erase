@@ -3,11 +3,12 @@ mod routes;
 
 use std::{env, time::Duration};
 
-use axum::{Extension, Router, routing::get};
+use axum::{Extension, Router, http::StatusCode, routing::get};
 use migrations::initialize_db;
 use sqlx::postgres::PgPoolOptions;
 use tower::ServiceBuilder;
 use tower_http::{compression::CompressionLayer, timeout::TimeoutLayer, trace::TraceLayer};
+use tracing::Level;
 
 #[tokio::main]
 async fn main() {
@@ -17,12 +18,20 @@ async fn main() {
     initialize_db(&pool).await.unwrap();
 
     let app = Router::new()
-        .route("/", get(|| async { tracing::info!("Hello, World!") }))
-        .merge(routes::jwt::router())
+        .route("/", get(health))
+        .merge(routes::auth::router())
         .layer(
             ServiceBuilder::new()
                 .layer(Extension(pool))
-                .layer(TraceLayer::new_for_http())
+                .layer(
+                    TraceLayer::new_for_http()
+                        .make_span_with(
+                            tower_http::trace::DefaultMakeSpan::new().level(Level::INFO),
+                        )
+                        .on_response(
+                            tower_http::trace::DefaultOnResponse::new().level(Level::INFO),
+                        ),
+                )
                 .layer(CompressionLayer::new())
                 .layer(TimeoutLayer::new(Duration::from_secs(5))),
         );
@@ -30,11 +39,12 @@ async fn main() {
     axum::serve(listener, app).await.unwrap();
 }
 
+async fn health() -> Result<&'static str, StatusCode> {
+    Ok("UP")
+}
+
 pub fn init_tracing_subscriber() {
-    tracing_subscriber::fmt()
-        .with_target(false)
-        .compact()
-        .init();
+    tracing_subscriber::fmt().compact().init();
     tracing::info!("initialized tracing subscriber");
 }
 

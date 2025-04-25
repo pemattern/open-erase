@@ -17,13 +17,14 @@ use axum_extra::{
 };
 use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation, decode, encode};
 use serde::{Deserialize, Serialize};
-use sqlx::{PgPool, prelude::FromRow, query_as};
+use sqlx::{FromRow, PgPool};
 
 #[derive(Clone)]
 pub struct Config {
     pub secret: String,
     pub issuer: String,
-    pub validity_secs: u64,
+    pub access_token_validity_secs: u64,
+    pub refresh_token_validity_secs: u64,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -35,8 +36,9 @@ pub struct Claims {
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct GetJWT {
+pub struct LoginResponse {
     pub access_token: String,
+    pub refresh_token: String,
     pub token_type: String,
     pub expires_in: u64,
 }
@@ -49,24 +51,28 @@ pub struct GetUser {
 }
 
 pub fn router() -> Router {
-    Router::new().route("/token", get(new))
+    Router::new()
+        .route("/auth/login", get(login))
+        .layer(Extension(Config {
+            secret: "spookysecret".to_string(),
+            issuer: "me".to_string(),
+            access_token_validity_secs: 900,            // 15 mins
+            refresh_token_validity_secs: 3600 * 24 * 7, // 1 week
+        }))
 }
 
 #[axum::debug_handler]
-pub async fn new(
+pub async fn login(
     Extension(pool): Extension<PgPool>,
+    Extension(config): Extension<Config>,
     TypedHeader(authorization): TypedHeader<Authorization<Basic>>,
 ) -> Response {
-    let config = Config {
-        secret: "abc123".to_string(),
-        issuer: "me".to_string(),
-        validity_secs: 3600,
-    };
-    let user = match query_as::<_, GetUser>(
-        "SELECT uuid, name, password_hash FROM users WHERE name = $1 LIMIT 1",
+    let mut transaction = pool.begin().await.unwrap();
+    let user: GetUser = match sqlx::query_as(
+        "SELECT uuid, name, password_hash FROM users WHERE name = $1 LIMIT 1;",
     )
     .bind(authorization.username())
-    .fetch_one(&pool)
+    .fetch_one(&mut *transaction)
     .await
     {
         Ok(user) => user,
@@ -83,27 +89,68 @@ pub async fn new(
         return StatusCode::UNAUTHORIZED.into_response();
     }
 
+    sqlx::query("DELETE FROM refresh_tokens WHERE user_uuid = $1;")
+        .bind(user.uuid)
+        .execute(&mut *transaction)
+        .await
+        .unwrap();
+
     let sub = user.uuid.to_string();
     let now = Utc::now();
     let iat = now.timestamp() as usize;
-    let expires_at = now + Duration::from_secs(config.validity_secs);
-    let exp = expires_at.timestamp() as usize;
+    let refresh_token_expires_at = now + Duration::from_secs(config.refresh_token_validity_secs);
+    let exp = refresh_token_expires_at.timestamp() as usize;
     let iss = config.issuer;
-    let claims = Claims { sub, exp, iat, iss };
+    let refresh_token_claims = Claims {
+        sub: sub.clone(),
+        exp,
+        iat,
+        iss: iss.clone(),
+    };
 
     let secret = config.secret;
     let key = EncodingKey::from_secret(secret.as_bytes());
 
-    match encode(&Header::default(), &claims, &key) {
-        Ok(jwt) => (
-            StatusCode::OK,
-            Json(GetJWT {
-                access_token: jwt,
-                token_type: String::from("Bearer"),
-                expires_in: config.validity_secs,
-            }),
-        )
-            .into_response(),
+    let refresh_token = encode(&Header::default(), &refresh_token_claims, &key).unwrap();
+
+    // TODO: HASH refresh token
+
+    sqlx::query(
+        "INSERT INTO refresh_tokens (
+            uuid,
+            user_uuid,
+            token_hash,
+            created_at
+        ) VALUES (
+            $1, $2, $3, $4
+        )",
+    )
+    .bind(Uuid::now_v7())
+    .bind(user.uuid)
+    .bind(&refresh_token)
+    .bind(Utc::now())
+    .execute(&mut *transaction)
+    .await
+    .unwrap();
+
+    let access_token_expires_at = now + Duration::from_secs(config.access_token_validity_secs);
+    let exp = access_token_expires_at.timestamp() as usize;
+    let access_token_claims = Claims { sub, exp, iat, iss };
+
+    match encode(&Header::default(), &access_token_claims, &key) {
+        Ok(access_token) => {
+            transaction.commit().await.unwrap();
+            (
+                StatusCode::OK,
+                Json(LoginResponse {
+                    access_token,
+                    refresh_token,
+                    token_type: String::from("Bearer"),
+                    expires_in: config.access_token_validity_secs,
+                }),
+            )
+                .into_response()
+        }
         Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
     }
 }
