@@ -25,6 +25,13 @@ impl ErrorResponse {
         })
     }
 
+    pub fn method_not_allowed() -> ApiResult {
+        Err(Self {
+            status_code: 405,
+            message: String::from("used http method is not allowed for the requested resource"),
+        })
+    }
+
     pub fn internal_server_error() -> ApiResult {
         Err(Self {
             status_code: 500,

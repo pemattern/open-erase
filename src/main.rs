@@ -1,11 +1,13 @@
 mod config;
 mod error;
+mod fallback_handler;
 mod routes;
 
 use std::{env, time::Duration};
 
 use axum::{Extension, Router, http::StatusCode, response::Response, routing::get};
 use error::ErrorResponse;
+use fallback_handler::{method_not_allowed_handler, not_found_handler};
 use sqlx::postgres::PgPoolOptions;
 use tower::ServiceBuilder;
 use tower_http::{compression::CompressionLayer, timeout::TimeoutLayer, trace::TraceLayer};
@@ -23,6 +25,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let app = Router::new()
         .route("/", get(health))
         .merge(routes::auth::router())
+        .fallback(not_found_handler)
+        .method_not_allowed_fallback(method_not_allowed_handler)
         .layer(
             ServiceBuilder::new()
                 .layer(Extension(pool))

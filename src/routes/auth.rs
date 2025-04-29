@@ -5,7 +5,7 @@ use uuid::Uuid;
 
 use axum::{
     Extension, Json, Router, extract::Request, http::StatusCode, middleware::Next,
-    response::IntoResponse, routing::get,
+    response::IntoResponse, routing::post,
 };
 use axum_extra::{
     TypedHeader,
@@ -16,6 +16,8 @@ use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, PgPool};
 
 use crate::{ApiResult, config::Config, error::ErrorResponse};
+
+use super::user::hash_password;
 
 #[derive(Serialize, Deserialize)]
 pub struct Claims {
@@ -42,13 +44,15 @@ pub struct GetUser {
 
 pub fn router() -> Router {
     Router::new()
-        .route("/auth/login", get(login))
+        .route("/auth/login", post(login))
+        .route("/auth/refresh", post(refresh))
         .layer(Extension(Config {
             secret: "spookysecret".to_string(),
             issuer: "me".to_string(),
             access_token_validity_secs: 900,            // 15 mins
             refresh_token_validity_secs: 3600 * 24 * 7, // 1 week
         }))
+        .method_not_allowed_fallback(method_not_allowed_handler)
 }
 
 #[axum::debug_handler]
@@ -102,8 +106,7 @@ pub async fn login(
     let key = EncodingKey::from_secret(secret.as_bytes());
 
     let refresh_token = encode(&Header::default(), &refresh_token_claims, &key).unwrap();
-
-    // TODO: HASH refresh token
+    let refresh_token_hash = hash_password(&refresh_token);
 
     sqlx::query(
         "INSERT INTO refresh_tokens (
@@ -117,7 +120,7 @@ pub async fn login(
     )
     .bind(Uuid::now_v7())
     .bind(user.uuid)
-    .bind(&refresh_token)
+    .bind(&refresh_token_hash)
     .bind(Utc::now())
     .execute(&mut *transaction)
     .await
@@ -143,6 +146,14 @@ pub async fn login(
         }
         Err(_) => ErrorResponse::internal_server_error(),
     }
+}
+
+#[axum::debug_handler]
+pub async fn refresh(
+    Extension(pool): Extension<PgPool>,
+    Extension(config): Extension<Config>,
+) -> ApiResult {
+    ErrorResponse::internal_server_error()
 }
 
 pub async fn authorize(

@@ -76,9 +76,9 @@ pub async fn post_user(Extension(pool): Extension<PgPool>, Json(user): Json<Post
     }
 }
 
-pub fn hash_password<S: Into<String>>(password: S, salt: S) -> String {
+pub fn hash_password<S: Into<String>>(password: S) -> String {
     let argon2 = Argon2::default();
-    let salt_string = SaltString::encode_b64(salt.into().as_bytes()).unwrap();
+    let salt_string = SaltString::encode_b64(Uuid::now_v7().as_bytes()).unwrap();
     let password_hash = argon2.hash_password(password.into().as_bytes(), &salt_string).unwrap();
     password_hash.to_string()
 }
