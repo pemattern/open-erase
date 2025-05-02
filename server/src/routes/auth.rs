@@ -15,7 +15,9 @@ use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation, decode, encode}
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, PgPool};
 
-use crate::{ApiResult, config::Config, error::ErrorResponse};
+use crate::{
+    ApiResult, config::Config, error::ErrorResponse, fallback_handler::method_not_allowed_handler,
+};
 
 use super::user::hash_password;
 

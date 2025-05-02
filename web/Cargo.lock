@@ -13,9 +13,9 @@ dependencies = [
 
 [[package]]
 name = "any_spawner"
-version = "0.3.0-rc3"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a13cbc743e8026cbe749d81d093e42afdd9178ef969374a8c7e6eff0bf130386"
+checksum = "1384d3fe1eecb464229fcf6eebb72306591c56bf27b373561489458a7c73027d"
 dependencies = [
  "futures",
  "thiserror 2.0.12",
@@ -722,9 +722,9 @@ dependencies = [
 
 [[package]]
 name = "leptos"
-version = "0.8.0-rc3"
+version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dc5f2f235554843f8d6d92575e1fbd4ae3702276c8a79dfe80efd626a53ae8d1"
+checksum = "7ebeea243876c96655d064a28af6d9918f226fed14af9f781e3778bcf7fed66e"
 dependencies = [
  "any_spawner",
  "cfg-if",
@@ -759,9 +759,9 @@ dependencies = [
 
 [[package]]
 name = "leptos_config"
-version = "0.8.0-rc3"
+version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c7b65ec83bcc4092595004cfabdffa02ec839bcb958d217daecf68749721099e"
+checksum = "4c811cf9507f4a0399f5eb5914e1e94f3b255a2ba3637de63fe68ddf42a47eff"
 dependencies = [
  "config",
  "regex",
@@ -772,9 +772,9 @@ dependencies = [
 
 [[package]]
 name = "leptos_dom"
-version = "0.8.0-rc3"
+version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "48ca8b532633ad56ac57ff07f4ab9e114a25abdd0b5d6a07b15387d17b2fda08"
+checksum = "e50558217ef975ac3bec7d72a52bf95bc03c5dcc60d6f89ce15874e9d3c142c7"
 dependencies = [
  "js-sys",
  "or_poisoned",
@@ -787,9 +787,9 @@ dependencies = [
 
 [[package]]
 name = "leptos_hot_reload"
-version = "0.8.0-rc3"
+version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fe52ee31da3c5b37cb8b4a173ed3dd387036d928f81d190bf6ca9260ea0ad2a2"
+checksum = "f62f95f3deb52e84d008c68136f6f91a484cf75249d888e6cdda1ae8674ba2cc"
 dependencies = [
  "anyhow",
  "camino",
@@ -805,9 +805,9 @@ dependencies = [
 
 [[package]]
 name = "leptos_macro"
-version = "0.8.0-rc3"
+version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3fcea19a64c8ae47cfae0c31e28c1007b9e8df326ec88becc503b8296b79753e"
+checksum = "4a7905c8937da27d55cbfc6c5983bc166af7863c4ecdd6f1c5b9880dca1b1082"
 dependencies = [
  "attribute-derive",
  "cfg-if",
@@ -828,9 +828,9 @@ dependencies = [
 
 [[package]]
 name = "leptos_server"
-version = "0.8.0-rc3"
+version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6136eeb08d9923270aa6ee4788ba0dc661fea7a689a319b1370770b184aa0060"
+checksum = "6bfdc78e05acacb767c24ce87e5393b76467ae568d4eac181e20c04f434713bf"
 dependencies = [
  "any_spawner",
  "base64",
@@ -940,6 +940,14 @@ name = "once_cell"
 version = "1.21.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "42f5e15c9953c5e4ccceeb2e7382a716482c34515315f7b03532b8b4e8393d2d"
+
+[[package]]
+name = "open-erase-web"
+version = "0.1.0"
+dependencies = [
+ "console_error_panic_hook",
+ "leptos",
+]
 
 [[package]]
 name = "or_poisoned"
@@ -1130,9 +1138,9 @@ checksum = "74765f6d916ee2faa39bc8e68e4f3ed8949b48cccdac59983d287a7cb71ce9c5"
 
 [[package]]
 name = "reactive_graph"
-version = "0.2.0-rc3"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f60623422c1ddd5af4e37c4e63fe82de84d143359660bff1a7b4fb8909a8cb20"
+checksum = "72a2b7d6c997a1d0024142726a6a044cd061827dd25709429fdc99ca294dedc8"
 dependencies = [
  "any_spawner",
  "async-lock",
@@ -1152,9 +1160,9 @@ dependencies = [
 
 [[package]]
 name = "reactive_stores"
-version = "0.2.0-rc3"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4d451da2d9dfb700d7cd1e0f921a38054db146434553533e4d94e5d75402921f"
+checksum = "a19194e9cd482f92fa24fac9b96e0b0295af0b519b1ebc2df9f048ea95fff1e9"
 dependencies = [
  "dashmap",
  "guardian",
@@ -1169,9 +1177,9 @@ dependencies = [
 
 [[package]]
 name = "reactive_stores_macro"
-version = "0.2.0-rc3"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a8273ea5d3df58d43b652bd408198d9d8219543e8d75fcab01d3583a34a0fcfa"
+checksum = "69f5d6b557ce3b0ac9644faf1677b8f45253c02fa69e14acc55d9695955e4af9"
 dependencies = [
  "convert_case 0.8.0",
  "proc-macro-error2",
@@ -1344,9 +1352,9 @@ dependencies = [
 
 [[package]]
 name = "server_fn"
-version = "0.8.0-rc3"
+version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6ae2d219f2a3170bdb789ab5277358f96e9c93f6635a20d5b8b8e12662d0e34f"
+checksum = "e058e6709b0ffb2976e03230916219d1ad50746686681beaf9b42b1beca0e298"
 dependencies = [
  "base64",
  "bytes",
@@ -1377,9 +1385,9 @@ dependencies = [
 
 [[package]]
 name = "server_fn_macro"
-version = "0.8.0-rc3"
+version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d50509b683acf508e7cb325ce88464649ebfd74e8961d6d44f86c534cc07bbb1"
+checksum = "24ed61a2cbd3d1fd9cd84b5eedcf9168ace43da68273b5e3055e5aafc0b0860a"
 dependencies = [
  "const_format",
  "convert_case 0.8.0",
@@ -1392,9 +1400,9 @@ dependencies = [
 
 [[package]]
 name = "server_fn_macro_default"
-version = "0.8.0-rc3"
+version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f4d914f202d57570bf85e83c6d6e1437900d047e098c5d7d9ef2bc02406ee1d7"
+checksum = "36c87b8d55da875a8b16fbe4992cc0ab6d2524b1fb1a0e488f16922f7c46b82f"
 dependencies = [
  "server_fn_macro",
  "syn",
@@ -1466,9 +1474,9 @@ dependencies = [
 
 [[package]]
 name = "tachys"
-version = "0.2.0-rc3"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a73ac6346863b937f38d9d0b7b3b05cdb63b81a6ced43c65a22a289ec0ea1c53"
+checksum = "cd309a35ec8282f0793ff8b58ebd4764779fd056f447c58a026331443b77ddae"
 dependencies = [
  "any_spawner",
  "async-trait",
@@ -1781,14 +1789,6 @@ dependencies = [
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "web-sys",
-]
-
-[[package]]
-name = "web"
-version = "0.1.0"
-dependencies = [
- "console_error_panic_hook",
- "leptos",
 ]
 
 [[package]]
