@@ -58,6 +58,7 @@ pub fn router() -> Router {
 }
 
 #[axum::debug_handler]
+#[utoipa::path(post, path = "/auth/login")]
 pub async fn login(
     Extension(pool): Extension<PgPool>,
     Extension(config): Extension<Config>,

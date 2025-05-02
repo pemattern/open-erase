@@ -1,11 +1,12 @@
 mod config;
 mod error;
 mod fallback_handler;
+mod middleware;
 mod routes;
 
 use std::{env, time::Duration};
 
-use axum::{Extension, Router, http::StatusCode, response::Response, routing::get};
+use axum::{Extension, Router, response::Response};
 use error::ErrorResponse;
 use fallback_handler::{method_not_allowed_handler, not_found_handler};
 use sqlx::postgres::PgPoolOptions;
@@ -17,13 +18,16 @@ pub type ApiResult = Result<Response, ErrorResponse>;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    init_tracing_subscriber();
+    tracing_subscriber::fmt().compact().init();
+    tracing::info!("initialized tracing subscriber");
+
     let db_url = db_url_from_envs()?;
     let pool = PgPoolOptions::new().connect(&db_url).await?;
+
     sqlx::migrate!("./migrations").run(&pool).await?;
 
     let app = Router::new()
-        .route("/", get(health))
+        .merge(routes::docs::router())
         .merge(routes::auth::router())
         .fallback(not_found_handler)
         .method_not_allowed_fallback(method_not_allowed_handler)
@@ -47,17 +51,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-async fn health() -> Result<&'static str, StatusCode> {
-    // Should fail due to timeout layer
-    tokio::time::sleep(Duration::from_millis(6000)).await;
-    Ok("UP")
-}
-
-pub fn init_tracing_subscriber() {
-    tracing_subscriber::fmt().compact().init();
-    tracing::info!("initialized tracing subscriber");
-}
-
 pub fn db_url_from_envs() -> Result<String, Box<dyn std::error::Error>> {
     let username = env::var("POSTGRES_USER")?;
     let password = env::var("POSTGRES_PASSWORD")?;
@@ -65,6 +58,5 @@ pub fn db_url_from_envs() -> Result<String, Box<dyn std::error::Error>> {
     let port = env::var("POSTGRES_PORT")?;
     let db = env::var("POSTGRES_DB")?;
     let url = format!("postgres://{username}:{password}@{host}:{port}/{db}");
-    tracing::info!("db url: {url}");
     Ok(url)
 }
