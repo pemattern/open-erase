@@ -1,17 +1,16 @@
 mod config;
 mod error;
-mod fallback_handler;
-mod middleware;
 mod routes;
 
 use std::{env, time::Duration};
 
 use axum::{Extension, Router, response::Response};
 use error::ErrorResponse;
-use fallback_handler::{method_not_allowed_handler, not_found_handler};
 use sqlx::postgres::PgPoolOptions;
 use tower::ServiceBuilder;
-use tower_http::{compression::CompressionLayer, timeout::TimeoutLayer, trace::TraceLayer};
+use tower_http::{
+    compression::CompressionLayer, services::ServeDir, timeout::TimeoutLayer, trace::TraceLayer,
+};
 use tracing::Level;
 
 pub type ApiResult = Result<Response, ErrorResponse>;
@@ -27,10 +26,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     sqlx::migrate!("./migrations").run(&pool).await?;
 
     let app = Router::new()
-        .merge(routes::docs::router())
-        .merge(routes::auth::router())
-        .fallback(not_found_handler)
-        .method_not_allowed_fallback(method_not_allowed_handler)
+        .nest("/api", routes::api_router())
+        .fallback_service(ServeDir::new("dist"))
+        .method_not_allowed_fallback(async || ErrorResponse::method_not_allowed())
         .layer(
             ServiceBuilder::new()
                 .layer(Extension(pool))

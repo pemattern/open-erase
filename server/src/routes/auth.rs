@@ -15,9 +15,7 @@ use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation, decode, encode}
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, PgPool};
 
-use crate::{
-    ApiResult, config::Config, error::ErrorResponse, fallback_handler::method_not_allowed_handler,
-};
+use crate::{ApiResult, config::Config, error::ErrorResponse};
 
 use super::user::hash_password;
 
@@ -46,15 +44,14 @@ pub struct GetUser {
 
 pub fn router() -> Router {
     Router::new()
-        .route("/auth/login", post(login))
-        .route("/auth/refresh", post(refresh))
+        .route("/login", post(login))
+        .route("/refresh", post(refresh))
         .layer(Extension(Config {
             secret: "spookysecret".to_string(),
             issuer: "me".to_string(),
             access_token_validity_secs: 900,            // 15 mins
             refresh_token_validity_secs: 3600 * 24 * 7, // 1 week
         }))
-        .method_not_allowed_fallback(method_not_allowed_handler)
 }
 
 #[axum::debug_handler]

@@ -5,25 +5,12 @@ services:
     image: open-erase-server
     env_file: .env
     build:
-      context: server
       dockerfile: Dockerfile
     ports:
       - "3000:3000"
     restart: always
     depends_on:
       - open-erase-db
-
-  open-erase-web:
-    container_name: open-erase-web
-    image: open-erase-web
-    build:
-      context: web
-      dockerfile: Dockerfile
-    ports:
-      - "80:80"
-    restart: always
-    depends_on:
-      - open-erase-server
 
   open-erase-db:
     container_name: open-erase-db
