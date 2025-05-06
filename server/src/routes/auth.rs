@@ -150,8 +150,8 @@ pub async fn login(
 
 #[axum::debug_handler]
 pub async fn refresh(
-    Extension(pool): Extension<PgPool>,
-    Extension(config): Extension<Config>,
+    Extension(_pool): Extension<PgPool>,
+    Extension(_config): Extension<Config>,
 ) -> ApiResult {
     ErrorResponse::internal_server_error()
 }
