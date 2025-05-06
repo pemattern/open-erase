@@ -8,9 +8,7 @@ use axum::{Extension, Router, response::Response};
 use error::ErrorResponse;
 use sqlx::postgres::PgPoolOptions;
 use tower::ServiceBuilder;
-use tower_http::{
-    compression::CompressionLayer, services::ServeDir, timeout::TimeoutLayer, trace::TraceLayer,
-};
+use tower_http::{compression::CompressionLayer, timeout::TimeoutLayer, trace::TraceLayer};
 use tracing::Level;
 
 pub type ApiResult = Result<Response, ErrorResponse>;
@@ -26,9 +24,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     sqlx::migrate!("./migrations").run(&pool).await?;
 
     let app = Router::new()
-        .nest("/api", routes::api_router())
-        .fallback_service(ServeDir::new("dist"))
-        .method_not_allowed_fallback(async || ErrorResponse::method_not_allowed())
+        .merge(routes::api_router())
+        .fallback_service(routes::web_service())
+        .method_not_allowed_fallback(routes::method_not_allowed_fallback)
         .layer(
             ServiceBuilder::new()
                 .layer(Extension(pool))

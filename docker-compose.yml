@@ -5,6 +5,7 @@ services:
     image: open-erase-server
     env_file: .env
     build:
+      context: .
       dockerfile: Dockerfile
     ports:
       - "3000:3000"
