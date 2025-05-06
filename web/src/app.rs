@@ -1,8 +1,8 @@
-use leptos::{IntoView, component, view};
+use leptos::prelude::*;
 
 #[component]
 pub fn App() -> impl IntoView {
     view! {
-        <input></input>
+        <div>TEST</div>
     }
 }
