@@ -2,15 +2,15 @@ FROM rust:1.86.0 AS base
 
 FROM node:23.11-bookworm AS css
 WORKDIR /css
-COPY web ./
 RUN npm install tailwindcss @tailwindcss/cli
+COPY web ./
 RUN npx @tailwindcss/cli -i ./input.css -o ./output.css
 
 FROM base AS web
 WORKDIR /web
-COPY web ./
 RUN rustup target add wasm32-unknown-unknown
 RUN cargo install trunk wasm-bindgen-cli
+COPY web ./
 RUN trunk build --release
 COPY --from=css /css/output.css ./dist/output.css
 
