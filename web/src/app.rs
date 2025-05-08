@@ -1,36 +1,19 @@
 use leptos::prelude::*;
 use leptos_router::{components::*, path};
 
+use crate::navbar::NavBar;
+
 #[component]
 pub fn App() -> impl IntoView {
     view! {
       <Router>
-        <nav>
-          <a href="/">Home</a>
-        </nav>
+        <NavBar/>
         <main>
           <Routes fallback=NotFound>
             <Route path=path!("/") view=Home/>
           </Routes>
         </main>
       </Router>
-    }
-}
-
-#[component]
-pub fn NavBar() -> impl IntoView {
-    view! {
-      <nav>
-        <ul>
-        </ul>
-      </nav>
-    }
-}
-
-#[component]
-pub fn NavBarEntry(path: &'static str, text: &'static str) -> impl IntoView {
-    view! {
-      <A href=path>{text}</A>
     }
 }
 
