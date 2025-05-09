@@ -1,0 +1,46 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-*: initial;
+  --color-white: #ffffff;
+  --color-black: #3a3a3a;
+  --color-dark-gray: #1b1e22;
+  --color-light-blue: #ecedf7;
+  --color-blue: #accbfa;
+  --color-dark-blue: #4250af;
+
+  --font-sans: 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+@font-face {
+  font-family: 'Inter';
+  src: url('/assets/fonts/Inter/Inter-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Inter';
+  src: url('/assets/fonts/Inter/Inter-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: url('/assets/fonts/JetBrainsMono/JetBrainsMono-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: url('/assets/fonts/JetBrainsMono/JetBrainsMono-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}

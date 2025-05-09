@@ -5,5 +5,7 @@ edition = "2024"
 
 [dependencies]
 console_error_panic_hook = "0.1.7"
+icondata = "0.5.0"
 leptos = { version = "0.8.1", features = ["csr"] }
+leptos_icons = "0.6.0"
 leptos_router = { version = "0.8.2", features = ["tracing"] }
