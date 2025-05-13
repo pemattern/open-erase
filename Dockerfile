@@ -26,9 +26,8 @@ RUN cargo build --release
 FROM nixos/nix AS iso-builder
 RUN echo "experimental-features = nix-command flakes" >> /etc/nix/nix.conf
 WORKDIR /client
-COPY ./client/x86_64 .
+COPY ./client/x86_64 /client
 COPY --from=client-builder /client/target/release/x86_64 /client/x86_64
-RUN ls -a
 RUN nix build .#nixosConfigurations.iso.config.system.build.isoImage
 
 FROM debian:bookworm-slim AS runtime
