@@ -18,10 +18,24 @@ WORKDIR /server
 COPY server ./
 RUN cargo build --release
 
+FROM base AS client-builder
+WORKDIR /client
+COPY client/x86_64 ./
+RUN cargo build --release
+
+FROM nixos/nix AS iso-builder
+RUN echo "experimental-features = nix-command flakes" >> /etc/nix/nix.conf
+WORKDIR /client
+COPY ./client/x86_64 .
+COPY --from=client-builder /client/target/release/x86_64 /client/x86_64
+RUN ls -a
+RUN nix build .#nixosConfigurations.iso.config.system.build.isoImage
+
 FROM debian:bookworm-slim AS runtime
 COPY web/assets /dist/assets
 COPY --from=css-builder /css/styles/output.css /dist/styles/output.css
 COPY --from=server-builder /server/target/release/open-erase-server /open-erase-server
 COPY --from=web-builder /web/dist /dist
+COPY --from=iso-builder /client/result/iso /dist/artifacts
 ENTRYPOINT [ "/open-erase-server" ]
 EXPOSE 3000
