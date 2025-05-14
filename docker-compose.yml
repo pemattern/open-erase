@@ -31,6 +31,22 @@ services:
       timeout: 5s
       retries: 5
 
+  open-erase-iso-builder:
+    container_name: open-erase-iso-builder
+    image: open-erase-iso-builder
+    privileged: true
+    build:
+      context: .
+      dockerfile: iso-builder.Dockerfile
+    ports:
+      - "3001:3001"
+    # volumes:
+    #   - /proc:/proc
+    #   - /tmp:/tmp
+    #   - /dev:/dev
+    command: >
+      sh -c "mkarchiso -v -w /tmp/archiso-tmp -o /iso/out /iso"
+
 volumes:
   db:
     driver: local

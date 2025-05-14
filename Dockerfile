@@ -18,12 +18,6 @@ WORKDIR /server
 COPY server ./
 RUN cargo build --release
 
-FROM archlinux:base-20250511.0.348143⁠AS iso-builder
-WORKDIR /iso
-COPY client/x86_64/iso/ ./
-RUN mkarchiso
-
-
 FROM debian:bookworm-slim AS runtime
 COPY web/assets /dist/assets
 COPY --from=css-builder /css/styles/output.css /dist/styles/output.css
