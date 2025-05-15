@@ -35,6 +35,7 @@ services:
     container_name: open-erase-iso-builder
     image: open-erase-iso-builder
     privileged: true
+    stdin_open: true
     build:
       context: .
       dockerfile: iso-builder.Dockerfile
