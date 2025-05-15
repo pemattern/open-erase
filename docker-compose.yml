@@ -45,7 +45,7 @@ services:
     #   - /tmp:/tmp
     #   - /dev:/dev
     command: >
-      sh -c "mkarchiso -v -w /tmp/archiso-tmp -o /iso/out /iso"
+      sh -c "alias pacman='pacman --noconfirm' && mkarchiso -v -w /tmp/archiso-tmp -o /iso/out /iso"
 
 volumes:
   db:
