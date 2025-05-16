@@ -34,7 +34,9 @@ services:
   open-erase-iso-builder:
     container_name: open-erase-iso-builder
     image: open-erase-iso-builder
-    privileged: true
+    # privileged: true
+    cap_add:
+      - SYS_ADMIN
     stdin_open: true
     build:
       context: .
@@ -46,7 +48,7 @@ services:
     #   - /tmp:/tmp
     #   - /dev:/dev
     command: >
-      sh -c "alias pacman='pacman --noconfirm' && mkarchiso -v -w /tmp/archiso-tmp -o /iso/out /iso"
+      sh -c "mkarchiso -v -w /tmp/archiso-tmp -o /iso/out /iso"
 
 volumes:
   db:
