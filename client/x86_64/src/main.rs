@@ -11,7 +11,6 @@ use ratatui::{
     widgets::{Block, Paragraph, Widget},
 };
 use termion::{
-    clear,
     event::Key,
     input::{Keys, TermRead},
     raw::{IntoRawMode, RawTerminal},
@@ -21,10 +20,10 @@ use termion::{
 type Tty = Terminal<TermionBackend<AlternateScreen<RawTerminal<Stdout>>>>;
 
 fn main() -> io::Result<()> {
-    println!("{}", clear::All);
     let writer = std::io::stdout().into_raw_mode()?.into_alternate_screen()?;
     let backend = TermionBackend::new(writer);
     let mut terminal = Terminal::new(backend)?;
+    terminal.clear()?;
     App::default().run(&mut terminal)
 }
 
