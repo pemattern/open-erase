@@ -18,15 +18,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     tracing_subscriber::fmt().compact().init();
     tracing::info!("initialized tracing subscriber");
 
-    tracing::info!("reading environment variables");
     let db_url = db_url_from_envs()?;
-    tracing::info!("connecting to database");
     let pool = PgPoolOptions::new().connect(&db_url).await?;
 
-    tracing::info!("running migrations");
     sqlx::migrate!("./migrations").run(&pool).await?;
 
-    tracing::info!("creating router");
     let app = Router::new()
         .merge(routes::api_router())
         .fallback_service(routes::web_service())
@@ -52,11 +48,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 pub fn db_url_from_envs() -> Result<String, Box<dyn std::error::Error>> {
-    let username = env::var("POSTGRES_USER").unwrap_or("postgres".to_string());
-    let password = env::var("POSTGRES_PASSWORD").unwrap_or("postgres".to_string());
-    let host = env::var("POSTGRES_HOST").unwrap_or("localhost".to_string());
-    let port = env::var("POSTGRES_PORT").unwrap_or("5432".to_string());
-    let db = env::var("POSTGRES_DB").unwrap_or("postgres".to_string());
+    let username = env::var("POSTGRES_USER")?;
+    let password = env::var("POSTGRES_PASSWORD")?;
+    let host = env::var("POSTGRES_HOST")?;
+    let port = env::var("POSTGRES_PORT")?;
+    let db = env::var("POSTGRES_DB")?;
     let url = format!("postgres://{username}:{password}@{host}:{port}/{db}");
     Ok(url)
 }

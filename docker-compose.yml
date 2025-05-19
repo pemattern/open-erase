@@ -31,19 +31,19 @@ services:
       timeout: 5s
       retries: 5
 
-  # open-erase-iso-builder:
-  #   container_name: open-erase-iso-builder
-  #   image: open-erase-iso-builder
-  #   cap_add:
-  #     - SYS_ADMIN
-  #   stdin_open: true
-  #   build:
-  #     context: .
-  #     dockerfile: iso-builder.Dockerfile
-  #   ports:
-  #     - "3001:3001"
-  #   command: >
-  #     sh -c "mkarchiso -v -w /tmp/archiso-tmp -o /iso/out /iso"
+  open-erase-iso-builder:
+    container_name: open-erase-iso-builder
+    image: open-erase-iso-builder
+    cap_add:
+      - SYS_ADMIN
+    stdin_open: true
+    build:
+      context: .
+      dockerfile: iso-builder.Dockerfile
+    ports:
+      - "3001:3001"
+    command: >
+      sh -c "mkarchiso -v -w /tmp/archiso-tmp -o /iso/out /iso"
 
 volumes:
   db:
