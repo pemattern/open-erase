@@ -1,2 +1,5 @@
+[build]
+# dist = "../dist"
+
 [tools]
 tailwindcss = "4.1.7"

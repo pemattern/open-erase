@@ -11,8 +11,8 @@ const API_PATH: &str = "/api";
 const AUTH_PATH: &str = "/auth";
 const USER_PATH: &str = "/user";
 
-const STATIC_ASSETS_PATH: &str = "/dist";
-const INDEX_HTML_PATH: &str = "/dist/index.html";
+const STATIC_ASSETS_PATH: &str = "web/dist";
+const INDEX_HTML_PATH: &str = "web/dist/index.html";
 
 pub fn api_router() -> Router {
     Router::new().nest(
