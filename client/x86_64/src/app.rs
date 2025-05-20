@@ -1,9 +1,9 @@
 use std::{
-    io::{self, Stdin, Stdout},
+    io::{self, Stdout},
     sync::{
         Arc,
         atomic::{AtomicBool, Ordering},
-        mpsc::{self, Receiver},
+        mpsc,
     },
 };
 
@@ -54,7 +54,7 @@ impl App {
                     Key::Char('q') => self.exit(),
                     _ => {}
                 },
-                Message::Resize(_) => {}
+                Message::Resize => {}
             }
         }
     }

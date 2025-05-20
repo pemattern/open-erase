@@ -24,7 +24,7 @@ impl InputHandler {
                 }
                 if size != terminal_size().unwrap() {
                     size = terminal_size().unwrap();
-                    sender.send(Message::Resize(size)).unwrap();
+                    sender.send(Message::Resize).unwrap();
                 }
                 if exit.load(Ordering::SeqCst) {
                     break;
