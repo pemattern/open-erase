@@ -54,6 +54,7 @@ impl App {
                     Key::Char('q') => self.exit(),
                     _ => {}
                 },
+                Message::Resize(_) => {}
             }
         }
     }
