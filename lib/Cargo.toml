@@ -1,0 +1,10 @@
+[package]
+name = "open-erase-lib"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+
+[dependencies]
+pci-info = "0.3.2"
+pciid-parser = "0.8.0"

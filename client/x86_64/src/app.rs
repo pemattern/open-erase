@@ -7,6 +7,7 @@ use std::{
     },
 };
 
+use clap::crate_version;
 use ratatui::{
     Frame, Terminal,
     buffer::Buffer,
@@ -21,9 +22,10 @@ use termion::{event::Key, raw::RawTerminal, screen::AlternateScreen};
 
 use crate::{input_handler::InputHandler, message::Message};
 
+const APP_TITLE: &str = concat!(" OpenErase ", crate_version!(), " ");
+
 #[derive(Debug, Default)]
 pub struct App {
-    counter: u8,
     exit: Arc<AtomicBool>,
 }
 
@@ -49,8 +51,6 @@ impl App {
         if let Ok(message) = receiver.recv() {
             match message {
                 Message::Input(key) => match key {
-                    Key::Left => self.decrement_counter(),
-                    Key::Right => self.increment_counter(),
                     Key::Char('q') => self.exit(),
                     _ => {}
                 },
@@ -62,39 +62,16 @@ impl App {
     fn exit(&mut self) {
         self.exit.store(true, Ordering::SeqCst);
     }
-
-    fn increment_counter(&mut self) {
-        self.counter += 1;
-    }
-
-    fn decrement_counter(&mut self) {
-        self.counter -= 1;
-    }
 }
 
 impl Widget for &App {
     fn render(self, area: Rect, buf: &mut Buffer) {
-        let title = Line::from(" Counter App Tutorial ".bold());
-        let instructions = Line::from(vec![
-            " Decrement ".into(),
-            "<Left>".blue().bold(),
-            " Increment ".into(),
-            "<Right>".blue().bold(),
-            " Quit ".into(),
-            "<Q> ".blue().bold(),
-        ]);
+        let title = Line::from(APP_TITLE);
         let block = Block::bordered()
             .title(title.centered())
-            .title_bottom(instructions.centered())
             .border_set(border::PLAIN);
 
-        let counter_text = Text::from(vec![Line::from(vec![
-            "Value: ".into(),
-            self.counter.to_string().yellow(),
-        ])]);
-
-        Paragraph::new(counter_text)
-            .centered()
+        Paragraph::new(open_erase_lib::audit::pci::get_pci())
             .block(block)
             .render(area, buf);
     }
