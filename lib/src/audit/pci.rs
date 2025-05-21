@@ -1,13 +1,13 @@
 use pci_info::{PciInfo, pci_enums::PciDeviceClass};
-use pciid_parser::{Database, find_device_name, find_vendor_name};
+use pciid_parser::{find_device_name, find_vendor_name};
 
+#[derive(Debug)]
 pub struct Gpu {
     vendor: Option<String>,
     name: Option<String>,
 }
 
 pub fn get_gpu_info() -> Vec<Gpu> {
-    let db = Database::read().unwrap();
     let info = PciInfo::enumerate_pci().unwrap();
     let mut result = Vec::new();
     for i in info {

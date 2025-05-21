@@ -13,9 +13,8 @@ use ratatui::{
     buffer::Buffer,
     layout::Rect,
     prelude::TermionBackend,
-    style::Stylize,
     symbols::border,
-    text::{Line, Text},
+    text::Line,
     widgets::{Block, Paragraph, Widget},
 };
 use termion::{event::Key, raw::RawTerminal, screen::AlternateScreen};
@@ -71,7 +70,7 @@ impl Widget for &App {
             .title(title.centered())
             .border_set(border::PLAIN);
 
-        Paragraph::new(open_erase_lib::audit::pci::get_pci())
+        Paragraph::new(format!("{:#?}", open_erase_lib::audit::pci::get_gpu_info()).as_str())
             .block(block)
             .render(area, buf);
     }
