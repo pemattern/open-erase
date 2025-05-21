@@ -70,8 +70,16 @@ impl Widget for &App {
             .title(title.centered())
             .border_set(border::PLAIN);
 
-        Paragraph::new(format!("{:#?}", open_erase_lib::audit::pci::get_gpu_info()).as_str())
-            .block(block)
-            .render(area, buf);
+        Paragraph::new(
+            format!(
+                "{:#?}\n{:#?}",
+                // open_erase_lib::audit::pci::get_gpu_info(),
+                open_erase_lib::audit::cpu::get_cpu_info(),
+                "a"
+            )
+            .as_str(),
+        )
+        .block(block)
+        .render(area, buf);
     }
 }

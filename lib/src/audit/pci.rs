@@ -3,8 +3,8 @@ use pciid_parser::{find_device_name, find_vendor_name};
 
 #[derive(Debug)]
 pub struct Gpu {
-    vendor: Option<String>,
-    name: Option<String>,
+    pub vendor: Option<String>,
+    pub name: Option<String>,
 }
 
 pub fn get_gpu_info() -> Vec<Gpu> {
