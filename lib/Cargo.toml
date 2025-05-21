@@ -8,3 +8,4 @@ edition = "2024"
 [dependencies]
 pci-info = "0.3.2"
 pciid-parser = "0.8.0"
+dmidecode = "0.9.0"
