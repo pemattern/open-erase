@@ -47,7 +47,7 @@ pub fn router() -> Router {
         .route("/login", post(login))
         .route("/refresh", post(refresh))
         .layer(Extension(Config {
-            secret: "spookysecret".to_string(),
+            encryption_key: "spookysecret".to_string(),
             issuer: "me".to_string(),
             access_token_validity_secs: 900,            // 15 mins
             refresh_token_validity_secs: 3600 * 24 * 7, // 1 week
@@ -102,7 +102,7 @@ pub async fn login(
         iss: iss.clone(),
     };
 
-    let secret = config.secret;
+    let secret = config.encryption_key;
     let key = EncodingKey::from_secret(secret.as_bytes());
 
     let refresh_token = encode(&Header::default(), &refresh_token_claims, &key).unwrap();
@@ -161,7 +161,7 @@ pub async fn authorize(
     mut request: Request,
     next: Next,
 ) -> ApiResult {
-    let secret = config.secret;
+    let secret = config.encryption_key;
     let key = DecodingKey::from_secret(secret.as_bytes());
     let issuer = config.issuer;
     let mut validation = Validation::new(jsonwebtoken::Algorithm::HS256);

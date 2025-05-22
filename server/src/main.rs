@@ -1,6 +1,7 @@
 mod config;
 mod error;
 mod routes;
+mod services;
 
 use std::{env, time::Duration};
 
