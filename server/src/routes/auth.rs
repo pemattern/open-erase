@@ -15,16 +15,20 @@ use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation, decode, encode}
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, PgPool};
 
-use crate::{ApiResult, config::Config, error::ErrorResponse};
+use crate::{
+    ApiResult,
+    config::{Config, SERVER_CONFIG},
+    error::ErrorResponse,
+};
 
 use super::user::hash_password;
 
 #[derive(Serialize, Deserialize)]
-pub struct Claims {
-    pub sub: String,
+pub struct Claims<'a> {
+    pub sub: &'a str,
+    pub iss: &'a str,
     pub exp: usize,
     pub iat: usize,
-    pub iss: String,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -46,19 +50,12 @@ pub fn router() -> Router {
     Router::new()
         .route("/login", post(login))
         .route("/refresh", post(refresh))
-        .layer(Extension(Config {
-            encryption_key: "spookysecret".to_string(),
-            issuer: "me".to_string(),
-            access_token_validity_secs: 900,            // 15 mins
-            refresh_token_validity_secs: 3600 * 24 * 7, // 1 week
-        }))
 }
 
 #[axum::debug_handler]
 #[utoipa::path(post, path = "/auth/login")]
 pub async fn login(
     Extension(pool): Extension<PgPool>,
-    Extension(config): Extension<Config>,
     TypedHeader(authorization): TypedHeader<Authorization<Basic>>,
 ) -> ApiResult {
     let mut transaction = pool.begin().await.unwrap();
@@ -89,21 +86,18 @@ pub async fn login(
         .await
         .unwrap();
 
-    let sub = user.uuid.to_string();
+    let user_uuid = user.uuid.to_string();
+    let sub = user_uuid.as_str();
     let now = Utc::now();
     let iat = now.timestamp() as usize;
-    let refresh_token_expires_at = now + Duration::from_secs(config.refresh_token_validity_secs);
+    let refresh_token_expires_at =
+        now + Duration::from_secs(SERVER_CONFIG.refresh_token_validity_secs);
     let exp = refresh_token_expires_at.timestamp() as usize;
-    let iss = config.issuer;
-    let refresh_token_claims = Claims {
-        sub: sub.clone(),
-        exp,
-        iat,
-        iss: iss.clone(),
-    };
+    let iss = &SERVER_CONFIG.issuer;
+    let refresh_token_claims = Claims { sub, iss, exp, iat };
 
-    let secret = config.encryption_key;
-    let key = EncodingKey::from_secret(secret.as_bytes());
+    let secret = SERVER_CONFIG.secret.as_bytes();
+    let key = EncodingKey::from_secret(secret);
 
     let refresh_token = encode(&Header::default(), &refresh_token_claims, &key).unwrap();
     let refresh_token_hash = hash_password(&refresh_token);
@@ -126,7 +120,8 @@ pub async fn login(
     .await
     .unwrap();
 
-    let access_token_expires_at = now + Duration::from_secs(config.access_token_validity_secs);
+    let access_token_expires_at =
+        now + Duration::from_secs(SERVER_CONFIG.access_token_validity_secs);
     let exp = access_token_expires_at.timestamp() as usize;
     let access_token_claims = Claims { sub, exp, iat, iss };
 
@@ -139,7 +134,7 @@ pub async fn login(
                     access_token,
                     refresh_token,
                     token_type: String::from("Bearer"),
-                    expires_in: config.access_token_validity_secs,
+                    expires_in: SERVER_CONFIG.access_token_validity_secs,
                 }),
             )
                 .into_response())
@@ -161,7 +156,7 @@ pub async fn authorize(
     mut request: Request,
     next: Next,
 ) -> ApiResult {
-    let secret = config.encryption_key;
+    let secret = config.secret;
     let key = DecodingKey::from_secret(secret.as_bytes());
     let issuer = config.issuer;
     let mut validation = Validation::new(jsonwebtoken::Algorithm::HS256);
