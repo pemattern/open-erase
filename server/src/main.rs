@@ -6,6 +6,7 @@ mod services;
 use std::{env, time::Duration};
 
 use axum::{Extension, Router, response::Response};
+use config::SERVER_CONFIG;
 use error::ErrorResponse;
 use sqlx::postgres::PgPoolOptions;
 use tower::ServiceBuilder;
@@ -18,6 +19,7 @@ pub type ApiResult = Result<Response, ErrorResponse>;
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     tracing_subscriber::fmt().compact().init();
     tracing::info!("initialized tracing subscriber");
+    tracing::info!("loaded server config: {:#?}", *SERVER_CONFIG);
 
     let db_url = db_url_from_envs()?;
     let pool = PgPoolOptions::new().connect(&db_url).await?;

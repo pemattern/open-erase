@@ -21,12 +21,10 @@ use crate::{
     error::ErrorResponse,
 };
 
-use super::user::hash_password;
-
 #[derive(Serialize, Deserialize)]
-pub struct Claims<'a> {
-    pub sub: &'a str,
-    pub iss: &'a str,
+pub struct Claims {
+    pub sub: String,
+    pub iss: String,
     pub exp: usize,
     pub iat: usize,
 }
@@ -34,7 +32,6 @@ pub struct Claims<'a> {
 #[derive(Serialize, Deserialize)]
 pub struct LoginResponse {
     pub access_token: String,
-    pub refresh_token: String,
     pub token_type: String,
     pub expires_in: u64,
 }
@@ -47,9 +44,7 @@ pub struct GetUser {
 }
 
 pub fn router() -> Router {
-    Router::new()
-        .route("/login", post(login))
-        .route("/refresh", post(refresh))
+    Router::new().route("/login", post(login))
 }
 
 #[axum::debug_handler]
@@ -80,48 +75,15 @@ pub async fn login(
         return ErrorResponse::unauthorized();
     }
 
-    sqlx::query("DELETE FROM refresh_tokens WHERE user_uuid = $1;")
-        .bind(user.uuid)
-        .execute(&mut *transaction)
-        .await
-        .unwrap();
-
-    let user_uuid = user.uuid.to_string();
-    let sub = user_uuid.as_str();
+    let sub = user.uuid.to_string();
     let now = Utc::now();
     let iat = now.timestamp() as usize;
-    let refresh_token_expires_at =
-        now + Duration::from_secs(SERVER_CONFIG.refresh_token_validity_secs);
-    let exp = refresh_token_expires_at.timestamp() as usize;
-    let iss = &SERVER_CONFIG.issuer;
-    let refresh_token_claims = Claims { sub, iss, exp, iat };
-
+    let access_token_expires_at =
+        now + Duration::from_secs(SERVER_CONFIG.access_token_validity_secs);
+    let iss = SERVER_CONFIG.issuer.clone();
     let secret = SERVER_CONFIG.secret.as_bytes();
     let key = EncodingKey::from_secret(secret);
 
-    let refresh_token = encode(&Header::default(), &refresh_token_claims, &key).unwrap();
-    let refresh_token_hash = hash_password(&refresh_token);
-
-    sqlx::query(
-        "INSERT INTO refresh_tokens (
-            uuid,
-            user_uuid,
-            token_hash,
-            created_at
-        ) VALUES (
-            $1, $2, $3, $4
-        )",
-    )
-    .bind(Uuid::now_v7())
-    .bind(user.uuid)
-    .bind(&refresh_token_hash)
-    .bind(Utc::now())
-    .execute(&mut *transaction)
-    .await
-    .unwrap();
-
-    let access_token_expires_at =
-        now + Duration::from_secs(SERVER_CONFIG.access_token_validity_secs);
     let exp = access_token_expires_at.timestamp() as usize;
     let access_token_claims = Claims { sub, exp, iat, iss };
 
@@ -132,7 +94,6 @@ pub async fn login(
                 StatusCode::OK,
                 Json(LoginResponse {
                     access_token,
-                    refresh_token,
                     token_type: String::from("Bearer"),
                     expires_in: SERVER_CONFIG.access_token_validity_secs,
                 }),
@@ -141,14 +102,6 @@ pub async fn login(
         }
         Err(_) => ErrorResponse::internal_server_error(),
     }
-}
-
-#[axum::debug_handler]
-pub async fn refresh(
-    Extension(_pool): Extension<PgPool>,
-    Extension(_config): Extension<Config>,
-) -> ApiResult {
-    ErrorResponse::internal_server_error()
 }
 
 pub async fn authorize(
