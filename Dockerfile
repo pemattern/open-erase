@@ -1,4 +1,4 @@
-FROM rust:1.86.0 AS base
+FROM rust:1.88.0 AS base
 
 FROM base AS web-builder
 WORKDIR /web

@@ -1,18 +1,20 @@
-use argon2::{password_hash::SaltString, Argon2, PasswordHasher};
 use axum::{
     Extension, Json, Router,
+    extract::State,
     http::StatusCode,
     middleware,
     response::{IntoResponse, Response},
-    routing::get,
+    routing::{get, patch},
 };
 use chrono::{self, DateTime, Local};
 use serde::{Deserialize, Serialize};
-use sqlx::{FromRow, postgres::PgPool};
-use tower::ServiceBuilder;
+use sqlx::FromRow;
 use uuid::Uuid;
 
-use super::auth;
+use crate::{
+    middleware::auth,
+    services::{PostgresService, ServiceError},
+};
 
 #[derive(Serialize, Deserialize, FromRow)]
 pub struct GetUser {
@@ -29,56 +31,69 @@ pub struct PostUser {
     pub password: String,
 }
 
-pub fn router() -> Router {
+#[derive(Serialize, Deserialize)]
+pub struct UpdatePasswordUser {
+    pub password: String,
+}
+
+pub fn router(postgres_service: PostgresService) -> Router {
     Router::new()
-        .route("/user", get(get_user).post(post_user))
-        .layer(ServiceBuilder::new().layer(middleware::from_fn(auth::authorize)))
+        .route("/user", get(get_user).post(post_user).delete(delete_user))
+        .route("/user/update-password", patch(update_password))
+        .layer(middleware::from_fn(auth::authorize))
+        .with_state(postgres_service)
 }
 
 #[axum::debug_handler]
 pub async fn get_user(
-    Extension(pool): Extension<PgPool>,
-    Extension(user): Extension<Uuid>,
+    State(postgres_service): State<PostgresService>,
+    Extension(uuid): Extension<Uuid>,
 ) -> Response {
-    match sqlx::query_as::<_, GetUser>("SELECT * FROM users WHERE uuid = $1")
-        .bind(user)
-        .fetch_one(&pool)
-        .await
-    {
+    match postgres_service.users.find_by_uuid(uuid).await {
         Ok(user) => (StatusCode::OK, Json(user)).into_response(),
-        Err(sqlx::Error::RowNotFound) => StatusCode::NOT_FOUND.into_response(),
+        Err(ServiceError::RowNotFound) => StatusCode::NOT_FOUND.into_response(),
         Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
     }
 }
 
-pub async fn post_user(Extension(pool): Extension<PgPool>, Json(user): Json<PostUser>) -> Response {
-    let now = chrono::offset::Local::now();
-
-    match sqlx::query("INSERT INTO users (uuid, name, password, created_on, updated_on) VALUES ($1, $2, $3, $4, $5)")
-        .bind(Uuid::now_v7())
-        .bind(&user.name)
-        .bind(&user.password)
-        .bind(now)
-        .bind(now)
-        .execute(&pool)
+#[axum::debug_handler]
+pub async fn post_user(
+    State(postgres_service): State<PostgresService>,
+    Json(user): Json<PostUser>,
+) -> Response {
+    match postgres_service
+        .users
+        .create(user.name, user.password)
         .await
     {
         Ok(_) => StatusCode::CREATED.into_response(),
-        Err(sqlx::Error::Database(error)) => {
-    
-            if error.code().unwrap() == "23505" {
-                StatusCode::CONFLICT.into_response()
-            } else {
-                StatusCode::BAD_REQUEST.into_response()
-            }
-        }
         Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
     }
 }
 
-pub fn hash_password<S: Into<String>>(password: S) -> String {
-    let argon2 = Argon2::default();
-    let salt_string = SaltString::encode_b64(Uuid::now_v7().as_bytes()).unwrap();
-    let password_hash = argon2.hash_password(password.into().as_bytes(), &salt_string).unwrap();
-    password_hash.to_string()
+#[axum::debug_handler]
+pub async fn delete_user(
+    State(postgres_service): State<PostgresService>,
+    Extension(uuid): Extension<Uuid>,
+) -> Response {
+    match postgres_service.users.delete(uuid).await {
+        Ok(_) => todo!(),
+        Err(_) => todo!(),
+    }
+}
+
+#[axum::debug_handler]
+pub async fn update_password(
+    State(postgres_service): State<PostgresService>,
+    Extension(uuid): Extension<Uuid>,
+    Json(user): Json<UpdatePasswordUser>,
+) -> Response {
+    match postgres_service
+        .users
+        .update_password(uuid, user.password)
+        .await
+    {
+        Ok(_) => todo!(),
+        Err(_) => todo!(),
+    }
 }

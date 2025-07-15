@@ -1,6 +1,7 @@
 use axum::Router;
 use tower_http::services::{ServeDir, ServeFile};
 
+use crate::services::PostgresService;
 use crate::{ApiResult, error::ErrorResponse};
 
 mod auth;
@@ -14,12 +15,12 @@ const USER_PATH: &str = "/user";
 const STATIC_ASSETS_PATH: &str = "/dist";
 const INDEX_HTML_PATH: &str = "/dist/index.html";
 
-pub fn api_router() -> Router {
+pub fn api_router(postgres_service: PostgresService) -> Router {
     Router::new().nest(
         API_PATH,
         Router::new()
-            .nest(AUTH_PATH, auth::router())
-            .nest(USER_PATH, user::router())
+            .nest(AUTH_PATH, auth::router(postgres_service.clone()))
+            .nest(USER_PATH, user::router(postgres_service.clone()))
             .merge(docs::router()),
     )
 }

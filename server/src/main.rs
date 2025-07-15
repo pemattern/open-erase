@@ -1,13 +1,18 @@
 mod config;
+mod domain;
 mod error;
+mod middleware;
+mod repositories;
 mod routes;
 mod services;
+mod utils;
 
 use std::{env, time::Duration};
 
-use axum::{Extension, Router, response::Response};
+use axum::{Router, response::Response};
 use config::SERVER_CONFIG;
 use error::ErrorResponse;
+use services::PostgresService;
 use sqlx::postgres::PgPoolOptions;
 use tower::ServiceBuilder;
 use tower_http::{compression::CompressionLayer, timeout::TimeoutLayer, trace::TraceLayer};
@@ -23,16 +28,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let db_url = db_url_from_envs()?;
     let pool = PgPoolOptions::new().connect(&db_url).await?;
-
     sqlx::migrate!("./migrations").run(&pool).await?;
-
+    let postgres_service = PostgresService::new(&pool);
     let app = Router::new()
-        .merge(routes::api_router())
+        .merge(routes::api_router(postgres_service))
         .fallback_service(routes::web_service())
         .method_not_allowed_fallback(routes::method_not_allowed_fallback)
         .layer(
             ServiceBuilder::new()
-                .layer(Extension(pool))
                 .layer(
                     TraceLayer::new_for_http()
                         .make_span_with(
