@@ -49,7 +49,7 @@ pub async fn get_user(
     State(postgres_service): State<PostgresService>,
     Extension(uuid): Extension<Uuid>,
 ) -> Response {
-    match postgres_service.users.find_by_uuid(uuid).await {
+    match postgres_service.find_user_by_uuid(uuid).await {
         Ok(user) => (StatusCode::OK, Json(user)).into_response(),
         Err(ServiceError::RowNotFound) => StatusCode::NOT_FOUND.into_response(),
         Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
@@ -61,11 +61,7 @@ pub async fn post_user(
     State(postgres_service): State<PostgresService>,
     Json(user): Json<PostUser>,
 ) -> Response {
-    match postgres_service
-        .users
-        .create(user.name, user.password)
-        .await
-    {
+    match postgres_service.create_user(user.name, user.password).await {
         Ok(_) => StatusCode::CREATED.into_response(),
         Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
     }
@@ -76,7 +72,7 @@ pub async fn delete_user(
     State(postgres_service): State<PostgresService>,
     Extension(uuid): Extension<Uuid>,
 ) -> Response {
-    match postgres_service.users.delete(uuid).await {
+    match postgres_service.delete_user(uuid).await {
         Ok(_) => todo!(),
         Err(_) => todo!(),
     }
@@ -89,8 +85,7 @@ pub async fn update_password(
     Json(user): Json<UpdatePasswordUser>,
 ) -> Response {
     match postgres_service
-        .users
-        .update_password(uuid, user.password)
+        .update_user_password(uuid, user.password)
         .await
     {
         Ok(_) => todo!(),

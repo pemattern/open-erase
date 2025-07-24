@@ -55,8 +55,7 @@ pub async fn login(
     TypedHeader(authorization): TypedHeader<Authorization<Basic>>,
 ) -> ApiResult {
     let user = match postgres_service
-        .users
-        .find_by_name(authorization.username())
+        .find_user_by_name(authorization.username())
         .await
     {
         Ok(user) => user,
