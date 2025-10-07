@@ -3,7 +3,7 @@ use axum::{
     response::{IntoResponse, Response},
 };
 
-use crate::{ApiResult, services::ServiceError};
+use crate::services::ServiceError;
 
 pub struct ErrorResponse {
     status_code: u16,
@@ -13,41 +13,51 @@ pub struct ErrorResponse {
 impl From<ServiceError> for ErrorResponse {
     fn from(error: ServiceError) -> Self {
         match error {
-            ServiceError::Database(error) => tracing::error!("{}", error),
-            ServiceError::Hash(error) => tracing::error!("{}", error),
-            ServiceError::Auth => return ErrorResponse::unauthorized().unwrap_err(),
-        };
-        ErrorResponse::internal_server_error().unwrap_err()
+            ServiceError::Database(error) => {
+                tracing::error!("{}", error);
+                match error {
+                    sqlx::Error::RowNotFound => ErrorResponse::not_found(),
+                    _ => ErrorResponse::internal_server_error(),
+                }
+            }
+            ServiceError::Hash(error) => {
+                tracing::error!("{}", error);
+                match error {
+                    argon2::password_hash::Error::Password => ErrorResponse::unauthorized(),
+                    _ => ErrorResponse::internal_server_error(),
+                }
+            }
+        }
     }
 }
 
 impl ErrorResponse {
-    pub fn unauthorized() -> ApiResult {
-        Err(Self {
+    pub fn unauthorized() -> Self {
+        Self {
             status_code: 401,
             message: String::from("unauthorized access requested"),
-        })
+        }
     }
 
-    pub fn not_found() -> ApiResult {
-        Err(Self {
+    pub fn not_found() -> Self {
+        Self {
             status_code: 404,
             message: String::from("the requested resource was not found"),
-        })
+        }
     }
 
-    pub fn method_not_allowed() -> ApiResult {
-        Err(Self {
+    pub fn method_not_allowed() -> Self {
+        Self {
             status_code: 405,
             message: String::from("used http method is not allowed for the requested resource"),
-        })
+        }
     }
 
-    pub fn internal_server_error() -> ApiResult {
-        Err(Self {
+    pub fn internal_server_error() -> Self {
+        Self {
             status_code: 500,
             message: String::from("an unexpected error occured"),
-        })
+        }
     }
 }
 

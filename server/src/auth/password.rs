@@ -21,8 +21,5 @@ pub fn verify_password(password: &str, password_hash: &str) -> Result<(), Servic
     };
     Argon2::default()
         .verify_password(password.as_bytes(), &parsed_hash)
-        .map_err(|err| match err {
-            argon2::password_hash::Error::Password => ServiceError::Auth,
-            _ => ServiceError::Hash(err),
-        })
+        .map_err(ServiceError::Hash)
 }

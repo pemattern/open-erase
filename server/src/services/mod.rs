@@ -1,5 +1,6 @@
 use argon2::password_hash;
 use sqlx::PgPool;
+use thiserror::Error;
 use uuid::Uuid;
 
 use crate::{
@@ -11,10 +12,13 @@ use crate::{
 };
 
 pub type ServiceResult<T> = Result<T, ServiceError>;
+
+#[derive(Debug, Error)]
 pub enum ServiceError {
-    Database(sqlx::Error),
+    #[error("an unexpected error occured")]
+    Database(#[from] sqlx::Error),
+    #[error("unauthorized")]
     Hash(password_hash::Error),
-    Auth,
 }
 
 impl ServiceError {
@@ -35,52 +39,39 @@ impl PostgresService {
     }
 
     pub async fn find_user_by_uuid(&self, uuid: Uuid) -> ServiceResult<UserResponse> {
-        self.repository
-            .find_user_by_uuid(uuid)
-            .await
-            .map(UserResponse::from)
-            .map_err(ServiceError::Database)
+        let user = self.repository.find_user_by_uuid(uuid).await?;
+        Ok(user.into())
     }
 
     pub async fn find_user_by_email(&self, email: &str) -> ServiceResult<UserResponse> {
-        self.repository
-            .find_user_by_email(email)
-            .await
-            .map(UserResponse::from)
-            .map_err(ServiceError::Database)
+        let user = self.repository.find_user_by_email(email).await?;
+        Ok(user.into())
     }
 
     pub async fn find_user_password_hash_by_email(
         &self,
         email: &str,
     ) -> ServiceResult<UserPasswordHash> {
-        self.repository
-            .find_user_by_email(email)
-            .await
-            .map(UserPasswordHash::from)
-            .map_err(ServiceError::Database)
+        let user = self.repository.find_user_by_email(email).await?;
+        Ok(user.into())
     }
 
     pub async fn create_user(&self, email: String, password: String) -> ServiceResult<()> {
         let password_hash = hash_password(&password)?;
-        self.repository
-            .create_user(email, password_hash)
-            .await
-            .map_err(ServiceError::Database)
+        self.repository.create_user(email, password_hash).await?;
+        Ok(())
     }
 
     pub async fn delete_user(&self, uuid: Uuid) -> ServiceResult<()> {
-        self.repository
-            .delete_user(uuid)
-            .await
-            .map_err(ServiceError::Database)
+        self.repository.delete_user(uuid).await?;
+        Ok(())
     }
 
     pub async fn update_user_password(&self, uuid: Uuid, password: String) -> ServiceResult<()> {
         let password_hash = hash_password(&password)?;
         self.repository
             .update_user_password_hash(uuid, password_hash)
-            .await
-            .map_err(ServiceError::Database)
+            .await?;
+        Ok(())
     }
 }
