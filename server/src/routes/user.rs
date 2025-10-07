@@ -6,35 +6,13 @@ use axum::{
     response::{IntoResponse, Response},
     routing::{get, patch},
 };
-use chrono::{self, DateTime, Local};
-use serde::{Deserialize, Serialize};
-use sqlx::FromRow;
 use uuid::Uuid;
 
 use crate::{
     middleware::auth,
-    services::{PostgresService, ServiceError},
+    schemas::user::{CreateUserRequest, UpdateUserPasswordRequest},
+    services::PostgresService,
 };
-
-#[derive(Serialize, Deserialize, FromRow)]
-pub struct GetUser {
-    pub uuid: Uuid,
-    pub name: String,
-    pub password: String,
-    pub created_on: DateTime<Local>,
-    pub updated_on: DateTime<Local>,
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct PostUser {
-    pub name: String,
-    pub password: String,
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct UpdatePasswordUser {
-    pub password: String,
-}
 
 pub fn router(postgres_service: PostgresService) -> Router {
     Router::new()
@@ -50,7 +28,7 @@ pub async fn get_user(
     Extension(uuid): Extension<Uuid>,
 ) -> Response {
     match postgres_service.find_user_by_uuid(uuid).await {
-        Ok(user) => (Json(user), StatusCode::OK).into_response(),
+        Ok(_) => StatusCode::OK.into_response(),
         Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
     }
 }
@@ -58,9 +36,12 @@ pub async fn get_user(
 #[axum::debug_handler]
 pub async fn post_user(
     State(postgres_service): State<PostgresService>,
-    Json(user): Json<PostUser>,
+    Json(user): Json<CreateUserRequest>,
 ) -> Response {
-    match postgres_service.create_user(user.name, user.password).await {
+    match postgres_service
+        .create_user(user.email, user.password)
+        .await
+    {
         Ok(_) => StatusCode::CREATED.into_response(),
         Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
     }
@@ -81,7 +62,7 @@ pub async fn delete_user(
 pub async fn update_password(
     State(postgres_service): State<PostgresService>,
     Extension(uuid): Extension<Uuid>,
-    Json(user): Json<UpdatePasswordUser>,
+    Json(user): Json<UpdateUserPasswordRequest>,
 ) -> Response {
     match postgres_service
         .update_user_password(uuid, user.password)

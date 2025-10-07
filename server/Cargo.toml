@@ -4,15 +4,15 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-argon2 = "^0.5"
-axum = { version = "^0.8", features = ["macros"] }
-axum-extra = { version = "^0.10", features = ["typed-header"] }
-chrono = { version = "^0.4", features = ["serde"] }
-getrandom = "^0.3"
-hex = "^0.4"
-jsonwebtoken = "^9.3"
-serde = { version = "^1.0", features = ["derive"] }
-sqlx = { version = "^0.8", features = [
+argon2 = "0.5.3"
+axum = { version = "0.8.6", features = ["macros"] }
+axum-extra = { version = "0.10.3", features = ["typed-header"] }
+chrono = { version = "0.4.42", features = ["serde"] }
+getrandom = "0.3.3"
+hex = "0.4.3"
+jsonwebtoken = "9.3.1"
+serde = { version = "1.0.228", features = ["derive"] }
+sqlx = { version = "0.8.6", features = [
   "chrono",
   "postgres",
   "runtime-tokio",
@@ -20,17 +20,18 @@ sqlx = { version = "^0.8", features = [
   "tls-rustls",
   "uuid",
 ] }
-tokio = { version = "^1.47", features = ["macros", "rt-multi-thread"] }
-toml = "^0.9"
-tower = "^0.5"
-tower-http = { version = "^0.6", features = [
+thiserror = "2.0.17"
+tokio = { version = "1.47.1", features = ["macros", "rt-multi-thread"] }
+toml = "0.9.7"
+tower = "0.5.2"
+tower-http = { version = "0.6.6", features = [
   "compression-gzip",
   "fs",
   "timeout",
   "trace",
 ] }
-tracing = "^0.1"
-tracing-subscriber = "^0.3"
-utoipa = { version = "^5.4", features = ["axum_extras"] }
-utoipa-swagger-ui = { version = "^9.0", features = ["axum"] }
-uuid = { version = "^1.18", features = ["serde", "v7"] }
+tracing = "0.1.41"
+tracing-subscriber = "0.3.20"
+utoipa = { version = "5.4.0", features = ["axum_extras"] }
+utoipa-swagger-ui = { version = "9.0.2", features = ["axum"] }
+uuid = { version = "1.18.1", features = ["serde", "v7"] }

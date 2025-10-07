@@ -3,7 +3,9 @@ use sqlx::PgPool;
 use uuid::Uuid;
 
 use crate::{
+    ApiResult,
     auth::password::hash_password,
+    error::ErrorResponse,
     repositories::PostgresRepository,
     schemas::user::{UserPasswordHash, UserResponse},
 };
@@ -12,6 +14,13 @@ pub type ServiceResult<T> = Result<T, ServiceError>;
 pub enum ServiceError {
     Database(sqlx::Error),
     Hash(password_hash::Error),
+    Auth,
+}
+
+impl ServiceError {
+    pub fn into_api_response(self) -> ApiResult {
+        ErrorResponse::internal_server_error()
+    }
 }
 
 #[derive(Clone)]

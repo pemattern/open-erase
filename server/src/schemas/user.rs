@@ -1,10 +1,17 @@
 use chrono::{DateTime, Local};
+use serde::Deserialize;
 use uuid::Uuid;
 
 use crate::models::User;
 
+#[derive(Deserialize)]
 pub struct CreateUserRequest {
     pub email: String,
+    pub password: String,
+}
+
+#[derive(Deserialize)]
+pub struct UpdateUserPasswordRequest {
     pub password: String,
 }
 

@@ -11,7 +11,10 @@ use jsonwebtoken::EncodingKey;
 use jsonwebtoken::{Header, encode};
 use serde::{Deserialize, Serialize};
 
-use crate::{ApiResult, config::SERVER_CONFIG, error::ErrorResponse, services::PostgresService};
+use crate::{
+    ApiResult, auth::password::verify_password, config::SERVER_CONFIG, error::ErrorResponse,
+    services::PostgresService,
+};
 
 #[derive(Serialize, Deserialize)]
 pub struct Claims {
@@ -40,19 +43,10 @@ pub async fn login(
     State(postgres_service): State<PostgresService>,
     TypedHeader(authorization): TypedHeader<Authorization<Basic>>,
 ) -> ApiResult {
-    let Ok(user) = postgres_service
+    let user = postgres_service
         .find_user_password_hash_by_email(authorization.username())
-        .await
-    else {
-        return ErrorResponse::unauthorized();
-    };
-    let parsed_hash = PasswordHash::new(&user.password_hash).unwrap();
-    if Argon2::default()
-        .verify_password(authorization.password().as_bytes(), &parsed_hash)
-        .is_err()
-    {
-        return ErrorResponse::unauthorized();
-    }
+        .await?;
+    verify_password(authorization.password(), &user.password_hash)?;
 
     let sub = user.uuid.to_string();
     let now = Utc::now();

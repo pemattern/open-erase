@@ -3,11 +3,22 @@ use axum::{
     response::{IntoResponse, Response},
 };
 
-use crate::ApiResult;
+use crate::{ApiResult, services::ServiceError};
 
 pub struct ErrorResponse {
     status_code: u16,
     message: String,
+}
+
+impl From<ServiceError> for ErrorResponse {
+    fn from(error: ServiceError) -> Self {
+        match error {
+            ServiceError::Database(error) => tracing::error!("{}", error),
+            ServiceError::Hash(error) => tracing::error!("{}", error),
+            ServiceError::Auth => return ErrorResponse::unauthorized().unwrap_err(),
+        };
+        ErrorResponse::internal_server_error().unwrap_err()
+    }
 }
 
 impl ErrorResponse {
