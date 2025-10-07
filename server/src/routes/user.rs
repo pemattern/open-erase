@@ -50,8 +50,7 @@ pub async fn get_user(
     Extension(uuid): Extension<Uuid>,
 ) -> Response {
     match postgres_service.find_user_by_uuid(uuid).await {
-        Ok(user) => (StatusCode::OK, Json(user)).into_response(),
-        Err(ServiceError::RowNotFound) => StatusCode::NOT_FOUND.into_response(),
+        Ok(user) => (Json(user), StatusCode::OK).into_response(),
         Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
     }
 }

@@ -1,1 +1,1 @@
-DELETE FROM users WHERE name = 'system';
+DELETE FROM users WHERE email = 'system';

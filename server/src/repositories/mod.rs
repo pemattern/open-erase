@@ -1,9 +1,8 @@
-use crate::domain::models::User;
+use crate::models::User;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-pub type RepositoryResult<T> = Result<T, RepositoryError>;
-pub struct RepositoryError;
+pub type DatabaseResult<T> = Result<T, sqlx::Error>;
 
 #[derive(Clone)]
 pub struct PostgresRepository {
@@ -17,61 +16,47 @@ impl PostgresRepository {
 }
 
 impl PostgresRepository {
-    pub async fn find_user_by_uuid(&self, uuid: Uuid) -> RepositoryResult<User> {
+    pub async fn find_user_by_uuid(&self, uuid: Uuid) -> DatabaseResult<User> {
         sqlx::query_as::<_, User>("SELECT * FROM users WHERE uuid = $1")
             .bind(uuid)
             .fetch_one(&self.pool)
             .await
-            .map_err(|_| RepositoryError)
     }
 
-    pub async fn find_user_by_name(&self, name: &str) -> RepositoryResult<User> {
-        sqlx::query_as::<_, User>("SELECT * FROM users WHERE name = $1 LIMIT 1;")
-            .bind(name)
+    pub async fn find_user_by_email(&self, email: &str) -> DatabaseResult<User> {
+        sqlx::query_as::<_, User>("SELECT * FROM users WHERE email = $1")
+            .bind(email)
             .fetch_one(&self.pool)
             .await
-            .map_err(|_| RepositoryError)
     }
 
-    pub async fn create_user(&self, item: User) -> RepositoryResult<()> {
-        match sqlx::query("INSERT INTO users (uuid, name, password, created_on, updated_on) VALUES ($1, $2, $3, $4, $5)")
-            .bind(item.uuid)
-            .bind(&item.name)
-            .bind(&item.password_hash)
-            .bind(item.created_on)
-            .bind(item.updated_on)
+    pub async fn create_user(&self, email: String, password_hash: String) -> DatabaseResult<()> {
+        sqlx::query("INSERT INTO users (email, password_hash) VALUES ($1, $2)")
+            .bind(&email)
+            .bind(&password_hash)
             .execute(&self.pool)
             .await
-        {
-            Ok(_) => Ok(()),
-            Err(_) => Err(RepositoryError),
-        }
+            .map(|_| ())
     }
 
-    pub async fn delete_user(&self, uuid: Uuid) -> RepositoryResult<()> {
-        match sqlx::query("DELETE FROM users WHERE uuid = $1")
+    pub async fn delete_user(&self, uuid: Uuid) -> DatabaseResult<()> {
+        sqlx::query("DELETE FROM users WHERE uuid = $1")
             .bind(uuid)
             .execute(&self.pool)
             .await
-        {
-            Ok(_) => Ok(()),
-            Err(_) => Err(RepositoryError),
-        }
+            .map(|_| ())
     }
 
     pub async fn update_user_password_hash(
         &self,
         uuid: Uuid,
         password_hash: String,
-    ) -> RepositoryResult<()> {
-        match sqlx::query("UPDATE users SET password_hash = $2 WHERE uuid = $1")
+    ) -> DatabaseResult<()> {
+        sqlx::query("UPDATE users SET password_hash = $2 WHERE uuid = $1")
             .bind(uuid)
             .bind(password_hash)
             .execute(&self.pool)
             .await
-        {
-            Ok(_) => todo!(),
-            Err(_) => todo!(),
-        }
+            .map(|_| ())
     }
 }

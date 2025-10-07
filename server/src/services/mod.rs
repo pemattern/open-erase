@@ -1,14 +1,17 @@
+use argon2::password_hash;
 use sqlx::PgPool;
 use uuid::Uuid;
 
 use crate::{
-    domain::models::User, repositories::PostgresRepository, utils::password_hasher::hash_password,
+    auth::password::hash_password,
+    repositories::PostgresRepository,
+    schemas::user::{UserPasswordHash, UserResponse},
 };
 
 pub type ServiceResult<T> = Result<T, ServiceError>;
 pub enum ServiceError {
-    RowNotFound,
-    Internal,
+    Database(sqlx::Error),
+    Hash(password_hash::Error),
 }
 
 #[derive(Clone)]
@@ -22,41 +25,53 @@ impl PostgresService {
         Self { repository }
     }
 
-    pub async fn find_user_by_uuid(&self, uuid: Uuid) -> ServiceResult<User> {
+    pub async fn find_user_by_uuid(&self, uuid: Uuid) -> ServiceResult<UserResponse> {
         self.repository
             .find_user_by_uuid(uuid)
             .await
-            .map_err(|_| ServiceError::RowNotFound)
+            .map(UserResponse::from)
+            .map_err(ServiceError::Database)
     }
 
-    pub async fn find_user_by_name(&self, name: &str) -> ServiceResult<User> {
+    pub async fn find_user_by_email(&self, email: &str) -> ServiceResult<UserResponse> {
         self.repository
-            .find_user_by_name(name)
+            .find_user_by_email(email)
             .await
-            .map_err(|_| ServiceError::Internal)
+            .map(UserResponse::from)
+            .map_err(ServiceError::Database)
     }
 
-    pub async fn create_user(&self, name: String, password: String) -> ServiceResult<()> {
-        let password_hash = hash_password(password);
-        let user = User::new(name, password_hash);
+    pub async fn find_user_password_hash_by_email(
+        &self,
+        email: &str,
+    ) -> ServiceResult<UserPasswordHash> {
         self.repository
-            .create_user(user)
+            .find_user_by_email(email)
             .await
-            .map_err(|_| ServiceError::Internal)
+            .map(UserPasswordHash::from)
+            .map_err(ServiceError::Database)
+    }
+
+    pub async fn create_user(&self, email: String, password: String) -> ServiceResult<()> {
+        let password_hash = hash_password(&password)?;
+        self.repository
+            .create_user(email, password_hash)
+            .await
+            .map_err(ServiceError::Database)
     }
 
     pub async fn delete_user(&self, uuid: Uuid) -> ServiceResult<()> {
         self.repository
             .delete_user(uuid)
             .await
-            .map_err(|_| ServiceError::Internal)
+            .map_err(ServiceError::Database)
     }
 
     pub async fn update_user_password(&self, uuid: Uuid, password: String) -> ServiceResult<()> {
-        let password_hash = hash_password(password);
+        let password_hash = hash_password(&password)?;
         self.repository
             .update_user_password_hash(uuid, password_hash)
             .await
-            .map_err(|_| ServiceError::Internal)
+            .map_err(ServiceError::Database)
     }
 }

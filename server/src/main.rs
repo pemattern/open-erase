@@ -1,11 +1,12 @@
+mod auth;
 mod config;
-mod domain;
 mod error;
 mod middleware;
+mod models;
 mod repositories;
 mod routes;
+mod schemas;
 mod services;
-mod utils;
 
 use std::{env, time::Duration};
 

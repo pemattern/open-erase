@@ -2,10 +2,7 @@ use argon2::{Argon2, PasswordHash, PasswordVerifier};
 use chrono::Utc;
 use std::time::Duration;
 
-use axum::{
-    Extension, Json, Router, extract::State, http::StatusCode, response::IntoResponse,
-    routing::post,
-};
+use axum::{Json, Router, extract::State, http::StatusCode, response::IntoResponse, routing::post};
 use axum_extra::{
     TypedHeader,
     headers::{Authorization, authorization::Basic},
@@ -14,12 +11,7 @@ use jsonwebtoken::EncodingKey;
 use jsonwebtoken::{Header, encode};
 use serde::{Deserialize, Serialize};
 
-use crate::{
-    ApiResult,
-    config::{Config, SERVER_CONFIG},
-    error::ErrorResponse,
-    services::PostgresService,
-};
+use crate::{ApiResult, config::SERVER_CONFIG, error::ErrorResponse, services::PostgresService};
 
 #[derive(Serialize, Deserialize)]
 pub struct Claims {
@@ -39,11 +31,6 @@ pub struct LoginResponse {
 pub fn router(postgres_service: PostgresService) -> Router {
     Router::new()
         .route("/login", post(login))
-        .layer(Extension(Config {
-            secret: "spookysecret".to_string(),
-            issuer: "me".to_string(),
-            access_token_validity_secs: 900,
-        }))
         .with_state(postgres_service)
 }
 
@@ -51,15 +38,13 @@ pub fn router(postgres_service: PostgresService) -> Router {
 #[utoipa::path(post, path = "/auth/login")]
 pub async fn login(
     State(postgres_service): State<PostgresService>,
-    Extension(config): Extension<Config>,
     TypedHeader(authorization): TypedHeader<Authorization<Basic>>,
 ) -> ApiResult {
-    let user = match postgres_service
-        .find_user_by_name(authorization.username())
+    let Ok(user) = postgres_service
+        .find_user_password_hash_by_email(authorization.username())
         .await
-    {
-        Ok(user) => user,
-        Err(_) => return ErrorResponse::unauthorized(),
+    else {
+        return ErrorResponse::unauthorized();
     };
     let parsed_hash = PasswordHash::new(&user.password_hash).unwrap();
     if Argon2::default()
@@ -86,7 +71,7 @@ pub async fn login(
             Json(LoginResponse {
                 access_token,
                 token_type: String::from("Bearer"),
-                expires_in: config.access_token_validity_secs,
+                expires_in: SERVER_CONFIG.access_token_validity_secs,
             }),
         )
             .into_response()),

@@ -15,7 +15,7 @@ services:
 
   open-erase-db:
     container_name: open-erase-db
-    image: postgres
+    image: postgres:18
     restart: always
     env_file: .env
     environment:

@@ -1,6 +1,7 @@
-use axum::Router;
+use axum::{Extension, Router};
 use tower_http::services::{ServeDir, ServeFile};
 
+use crate::config::SERVER_CONFIG;
 use crate::services::PostgresService;
 use crate::{ApiResult, error::ErrorResponse};
 
@@ -16,13 +17,15 @@ const STATIC_ASSETS_PATH: &str = "/dist";
 const INDEX_HTML_PATH: &str = "/dist/index.html";
 
 pub fn api_router(postgres_service: PostgresService) -> Router {
-    Router::new().nest(
-        API_PATH,
-        Router::new()
-            .nest(AUTH_PATH, auth::router(postgres_service.clone()))
-            .nest(USER_PATH, user::router(postgres_service.clone()))
-            .merge(docs::router()),
-    )
+    Router::new()
+        .nest(
+            API_PATH,
+            Router::new()
+                .nest(AUTH_PATH, auth::router(postgres_service.clone()))
+                .nest(USER_PATH, user::router(postgres_service.clone()))
+                .merge(docs::router()),
+        )
+        .layer(Extension(&*SERVER_CONFIG))
 }
 
 pub fn web_service() -> ServeDir<ServeFile> {
