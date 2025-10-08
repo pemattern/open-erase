@@ -15,20 +15,16 @@ use crate::{
     state::AppState,
 };
 
-pub fn router(state: AppState) -> Router {
+pub fn router(state: AppState) -> Router<AppState> {
     Router::new()
         .route("/user", get(get_user).post(post_user).delete(delete_user))
         .route("/user/update-password", patch(update_password))
-        .layer(middleware::from_fn_with_state(
-            state.clone(),
-            auth::authorize,
-        ))
-        .with_state(state)
+        .layer(middleware::from_fn_with_state(state, auth::authorize))
 }
 
 #[axum::debug_handler]
 pub async fn get_user(State(state): State<AppState>, Extension(uuid): Extension<Uuid>) -> Response {
-    match state.postgres_service.find_user_by_uuid(uuid).await {
+    match state.database_service.find_user_by_uuid(uuid).await {
         Ok(_) => StatusCode::OK.into_response(),
         Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
     }
@@ -41,7 +37,7 @@ pub async fn post_user(
 ) -> ApiResult {
     let password_hash = state.hashing_service.hash_password(&user.password)?;
     state
-        .postgres_service
+        .database_service
         .create_user(user.email, password_hash)
         .await?;
     Ok(StatusCode::CREATED.into_response())
@@ -52,7 +48,7 @@ pub async fn delete_user(
     State(state): State<AppState>,
     Extension(uuid): Extension<Uuid>,
 ) -> ApiResult {
-    state.postgres_service.delete_user(uuid).await?;
+    state.database_service.delete_user(uuid).await?;
     Ok(StatusCode::OK.into_response())
 }
 
@@ -64,7 +60,7 @@ pub async fn update_password(
 ) -> ApiResult {
     let password_hash = state.hashing_service.hash_password(&user.password)?;
     state
-        .postgres_service
+        .database_service
         .update_user_password(uuid, password_hash)
         .await?;
     Ok(StatusCode::OK.into_response())

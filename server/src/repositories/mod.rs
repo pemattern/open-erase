@@ -1,62 +1,35 @@
-use crate::models::User;
-use sqlx::PgPool;
-use uuid::Uuid;
+pub mod user;
 
-pub type DatabaseResult<T> = Result<T, sqlx::Error>;
+use crate::repositories::user::{DatabaseUserRepository, PostgresUserRepository};
+use sqlx::PgPool;
+use thiserror::Error;
+
+pub type DatabaseResult<T> = Result<T, DatabaseError>;
+
+#[derive(Debug, Error)]
+pub enum DatabaseError {
+    #[error("an unexpected postgres error occured")]
+    Postgres(#[from] sqlx::Error),
+}
+
+pub trait DatabaseRepository: Send + Sync {
+    fn user(&self) -> &dyn DatabaseUserRepository;
+}
 
 #[derive(Clone)]
 pub struct PostgresRepository {
-    pool: PgPool,
+    user: PostgresUserRepository,
 }
 
 impl PostgresRepository {
     pub fn new(pool: PgPool) -> Self {
-        Self { pool }
+        let user = PostgresUserRepository::new(pool.clone());
+        Self { user }
     }
 }
 
-impl PostgresRepository {
-    pub async fn find_user_by_uuid(&self, uuid: Uuid) -> DatabaseResult<User> {
-        sqlx::query_as::<_, User>("SELECT * FROM users WHERE uuid = $1")
-            .bind(uuid)
-            .fetch_one(&self.pool)
-            .await
-    }
-
-    pub async fn find_user_by_email(&self, email: &str) -> DatabaseResult<User> {
-        sqlx::query_as::<_, User>("SELECT * FROM users WHERE email = $1")
-            .bind(email)
-            .fetch_one(&self.pool)
-            .await
-    }
-
-    pub async fn create_user(&self, email: String, password_hash: String) -> DatabaseResult<()> {
-        sqlx::query("INSERT INTO users (email, password_hash) VALUES ($1, $2)")
-            .bind(&email)
-            .bind(&password_hash)
-            .execute(&self.pool)
-            .await
-            .map(|_| ())
-    }
-
-    pub async fn delete_user(&self, uuid: Uuid) -> DatabaseResult<()> {
-        sqlx::query("DELETE FROM users WHERE uuid = $1")
-            .bind(uuid)
-            .execute(&self.pool)
-            .await
-            .map(|_| ())
-    }
-
-    pub async fn update_user_password_hash(
-        &self,
-        uuid: Uuid,
-        password_hash: String,
-    ) -> DatabaseResult<()> {
-        sqlx::query("UPDATE users SET password_hash = $2 WHERE uuid = $1")
-            .bind(uuid)
-            .bind(password_hash)
-            .execute(&self.pool)
-            .await
-            .map(|_| ())
+impl DatabaseRepository for PostgresRepository {
+    fn user(&self) -> &dyn DatabaseUserRepository {
+        &self.user
     }
 }

@@ -15,11 +15,11 @@ const USER_PATH: &str = "/user";
 const STATIC_ASSETS_PATH: &str = "/dist";
 const INDEX_HTML_PATH: &str = "/dist/index.html";
 
-pub fn api_router(state: AppState) -> Router {
+pub fn api_router(state: AppState) -> Router<AppState> {
     Router::new().nest(
         API_PATH,
         Router::new()
-            .nest(AUTH_PATH, auth::router(state.clone()))
+            .nest(AUTH_PATH, auth::router())
             .nest(USER_PATH, user::router(state.clone()))
             .merge(docs::router()),
     )

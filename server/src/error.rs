@@ -14,10 +14,7 @@ impl From<ServiceError> for ErrorResponse {
     fn from(error: ServiceError) -> Self {
         tracing::error!("{:?}", error);
         match error {
-            ServiceError::Database(error) => match error {
-                sqlx::Error::RowNotFound => ErrorResponse::not_found(),
-                _ => ErrorResponse::internal_server_error(),
-            },
+            ServiceError::Database(_error) => ErrorResponse::internal_server_error(),
             ServiceError::Hash(error) => match error {
                 argon2::password_hash::Error::Password => ErrorResponse::unauthorized(),
                 _ => ErrorResponse::internal_server_error(),

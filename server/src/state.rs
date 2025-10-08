@@ -4,30 +4,39 @@ use sqlx::postgres::PgPoolOptions;
 
 use crate::{
     config::Config,
-    services::{PostgresService, hashing::HashingService, token::TokenService},
+    repositories::{DatabaseRepository, PostgresRepository},
+    services::{DatabaseService, hashing::HashingService, token::TokenService},
 };
 
 #[derive(Clone)]
 pub struct AppState {
     pub config: Config,
-    pub postgres_service: PostgresService,
+    pub database_service: DatabaseService,
     pub hashing_service: HashingService,
     pub token_service: TokenService,
 }
 
 impl AppState {
-    pub async fn init() -> Result<Self, Box<dyn std::error::Error>> {
-        tracing_subscriber::fmt().compact().init();
+    pub async fn postgres() -> Result<Self, Box<dyn std::error::Error>> {
         let db_url = db_url_from_envs()?;
         let pool = PgPoolOptions::new().connect(&db_url).await?;
         sqlx::migrate!("./migrations").run(&pool).await?;
+        let repo = PostgresRepository::new(pool);
+        let state = Self::init(repo).await?;
+        Ok(state)
+    }
+
+    async fn init(
+        repo: impl DatabaseRepository + 'static,
+    ) -> Result<Self, Box<dyn std::error::Error>> {
+        tracing_subscriber::fmt().compact().init();
         let config = Config::load();
-        let postgres_service = PostgresService::new(&pool);
+        let database_service = DatabaseService::new(repo);
         let hashing_service = HashingService;
         let token_service = TokenService;
         Ok(Self {
             config,
-            postgres_service,
+            database_service,
             hashing_service,
             token_service,
         })

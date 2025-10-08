@@ -4,10 +4,10 @@ use axum_extra::{
     headers::{Authorization, authorization::Basic},
 };
 
-use crate::{ApiResult, schemas::token::TokenResponse, state::AppState};
+use crate::{ApiResult, error::ErrorResponse, schemas::token::TokenResponse, state::AppState};
 
-pub fn router(state: AppState) -> Router {
-    Router::new().route("/login", post(login)).with_state(state)
+pub fn router() -> Router<AppState> {
+    Router::new().route("/login", post(login))
 }
 
 #[axum::debug_handler]
@@ -16,10 +16,13 @@ pub async fn login(
     State(state): State<AppState>,
     TypedHeader(authorization): TypedHeader<Authorization<Basic>>,
 ) -> ApiResult {
-    let user = state
-        .postgres_service
+    let Some(user) = state
+        .database_service
         .find_user_password_hash_by_email(authorization.username())
-        .await?;
+        .await?
+    else {
+        return Err(ErrorResponse::not_found());
+    };
     state
         .hashing_service
         .verify_password(authorization.password(), &user.password_hash)?;

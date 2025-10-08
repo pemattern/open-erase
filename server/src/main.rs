@@ -22,9 +22,9 @@ pub type ApiResult = Result<Response, ErrorResponse>;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let state = AppState::init().await?;
+    let state = AppState::postgres().await?;
     let app = Router::new()
-        .merge(routes::api_router(state))
+        .merge(routes::api_router(state.clone()))
         .fallback_service(routes::web_service())
         .method_not_allowed_fallback(routes::method_not_allowed_fallback)
         .layer(
@@ -40,7 +40,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 )
                 .layer(CompressionLayer::new())
                 .layer(TimeoutLayer::new(Duration::from_secs(5))),
-        );
+        )
+        .with_state(state);
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await?;
     axum::serve(listener, app).await?;
     Ok(())
