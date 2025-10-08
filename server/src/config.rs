@@ -1,12 +1,10 @@
-use std::{fs, sync::LazyLock};
+use std::fs;
 
 use serde::Deserialize;
 
 const CONFIG_FILE_PATH: &str = "Server.toml";
 const DEFAULT_ISSUER: &str = "open-erase";
 const DEFAULT_ACCESS_TOKEN_VALIDITY_SECS: u64 = 60 * 60 * 24 * 7;
-
-pub static SERVER_CONFIG: LazyLock<Config> = LazyLock::new(deserialize_config);
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(default)]
@@ -15,6 +13,12 @@ pub struct Config {
     pub secret: String,
     pub issuer: String,
     pub access_token_validity_secs: u64,
+}
+
+impl Config {
+    pub fn load() -> Self {
+        deserialize_config()
+    }
 }
 
 impl Default for Config {

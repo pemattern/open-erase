@@ -1,8 +1,7 @@
-use axum::{Extension, Router};
+use axum::Router;
 use tower_http::services::{ServeDir, ServeFile};
 
-use crate::config::SERVER_CONFIG;
-use crate::services::PostgresService;
+use crate::state::AppState;
 use crate::{ApiResult, error::ErrorResponse};
 
 mod auth;
@@ -16,16 +15,14 @@ const USER_PATH: &str = "/user";
 const STATIC_ASSETS_PATH: &str = "/dist";
 const INDEX_HTML_PATH: &str = "/dist/index.html";
 
-pub fn api_router(postgres_service: PostgresService) -> Router {
-    Router::new()
-        .nest(
-            API_PATH,
-            Router::new()
-                .nest(AUTH_PATH, auth::router(postgres_service.clone()))
-                .nest(USER_PATH, user::router(postgres_service.clone()))
-                .merge(docs::router()),
-        )
-        .layer(Extension(&*SERVER_CONFIG))
+pub fn api_router(state: AppState) -> Router {
+    Router::new().nest(
+        API_PATH,
+        Router::new()
+            .nest(AUTH_PATH, auth::router(state.clone()))
+            .nest(USER_PATH, user::router(state.clone()))
+            .merge(docs::router()),
+    )
 }
 
 pub fn web_service() -> ServeDir<ServeFile> {
@@ -33,5 +30,5 @@ pub fn web_service() -> ServeDir<ServeFile> {
 }
 
 pub async fn method_not_allowed_fallback() -> ApiResult {
-    ErrorResponse::method_not_allowed()
+    Err(ErrorResponse::method_not_allowed())
 }

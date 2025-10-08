@@ -1,12 +1,12 @@
+pub mod hashing;
+pub mod token;
+
 use argon2::password_hash;
 use sqlx::PgPool;
 use thiserror::Error;
 use uuid::Uuid;
 
 use crate::{
-    ApiResult,
-    auth::password::hash_password,
-    error::ErrorResponse,
     repositories::PostgresRepository,
     schemas::user::{UserPasswordHash, UserResponse},
 };
@@ -19,12 +19,10 @@ pub enum ServiceError {
     Database(#[from] sqlx::Error),
     #[error("unauthorized")]
     Hash(password_hash::Error),
-}
-
-impl ServiceError {
-    pub fn into_api_response(self) -> ApiResult {
-        ErrorResponse::internal_server_error()
-    }
+    #[error("an unexpected error occured")]
+    Token(#[from] jsonwebtoken::errors::Error),
+    #[error("an unexpected error occured")]
+    Uuid(#[from] uuid::Error),
 }
 
 #[derive(Clone)]
@@ -56,8 +54,7 @@ impl PostgresService {
         Ok(user.into())
     }
 
-    pub async fn create_user(&self, email: String, password: String) -> ServiceResult<()> {
-        let password_hash = hash_password(&password)?;
+    pub async fn create_user(&self, email: String, password_hash: String) -> ServiceResult<()> {
         self.repository.create_user(email, password_hash).await?;
         Ok(())
     }
@@ -67,8 +64,11 @@ impl PostgresService {
         Ok(())
     }
 
-    pub async fn update_user_password(&self, uuid: Uuid, password: String) -> ServiceResult<()> {
-        let password_hash = hash_password(&password)?;
+    pub async fn update_user_password(
+        &self,
+        uuid: Uuid,
+        password_hash: String,
+    ) -> ServiceResult<()> {
         self.repository
             .update_user_password_hash(uuid, password_hash)
             .await?;
