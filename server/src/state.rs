@@ -4,7 +4,7 @@ use sqlx::postgres::PgPoolOptions;
 
 use crate::{
     config::Config,
-    repositories::{DatabaseRepository, PostgresRepository},
+    repositories::{DatabaseRepository, MockRepository, PostgresRepository},
     services::{DatabaseService, hashing::HashingService, token::TokenService},
 };
 
@@ -22,24 +22,26 @@ impl AppState {
         let pool = PgPoolOptions::new().connect(&db_url).await?;
         sqlx::migrate!("./migrations").run(&pool).await?;
         let repo = PostgresRepository::new(pool);
-        let state = Self::init(repo).await?;
-        Ok(state)
+        Ok(Self::init(repo))
     }
 
-    async fn init(
-        repo: impl DatabaseRepository + 'static,
-    ) -> Result<Self, Box<dyn std::error::Error>> {
+    pub fn mock() -> Self {
+        let repo = MockRepository::new();
+        Self::init(repo)
+    }
+
+    fn init(repo: impl DatabaseRepository + 'static) -> Self {
         tracing_subscriber::fmt().compact().init();
         let config = Config::load();
         let database_service = DatabaseService::new(repo);
         let hashing_service = HashingService;
         let token_service = TokenService;
-        Ok(Self {
+        Self {
             config,
             database_service,
             hashing_service,
             token_service,
-        })
+        }
     }
 }
 

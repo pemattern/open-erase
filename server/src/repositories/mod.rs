@@ -1,6 +1,8 @@
 pub mod user;
 
-use crate::repositories::user::{DatabaseUserRepository, PostgresUserRepository};
+use crate::repositories::user::{
+    DatabaseUserRepository, MockUserRepository, PostgresUserRepository,
+};
 use sqlx::PgPool;
 use thiserror::Error;
 
@@ -29,6 +31,24 @@ impl PostgresRepository {
 }
 
 impl DatabaseRepository for PostgresRepository {
+    fn user(&self) -> &dyn DatabaseUserRepository {
+        &self.user
+    }
+}
+
+#[derive(Clone)]
+pub struct MockRepository {
+    user: MockUserRepository,
+}
+
+impl MockRepository {
+    pub fn new() -> Self {
+        let user = MockUserRepository;
+        Self { user }
+    }
+}
+
+impl DatabaseRepository for MockRepository {
     fn user(&self) -> &dyn DatabaseUserRepository {
         &self.user
     }

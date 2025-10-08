@@ -67,3 +67,33 @@ impl DatabaseUserRepository for PostgresUserRepository {
         Ok(())
     }
 }
+
+#[derive(Clone)]
+pub struct MockUserRepository;
+
+#[async_trait]
+impl DatabaseUserRepository for MockUserRepository {
+    async fn find_by_uuid(&self, uuid: Uuid) -> DatabaseResult<Option<User>> {
+        let mut user = User::mock();
+        user.uuid = uuid;
+        Ok(Some(user))
+    }
+
+    async fn find_by_email(&self, email: &str) -> DatabaseResult<Option<User>> {
+        let mut user = User::mock();
+        user.email = email;
+        Ok(Some(user))
+    }
+
+    async fn create(&self, email: String, password_hash: String) -> DatabaseResult<()> {
+        Ok(())
+    }
+
+    async fn delete(&self, uuid: Uuid) -> DatabaseResult<()> {
+        Ok(())
+    }
+
+    async fn update_password_hash(&self, uuid: Uuid, password_hash: String) -> DatabaseResult<()> {
+        Ok(())
+    }
+}

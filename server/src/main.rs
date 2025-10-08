@@ -8,41 +8,45 @@ mod schemas;
 mod services;
 mod state;
 
-use std::time::Duration;
-
-use axum::{Router, response::Response};
+use axum::response::Response;
 use error::ErrorResponse;
-use tower::ServiceBuilder;
-use tower_http::{compression::CompressionLayer, timeout::TimeoutLayer, trace::TraceLayer};
-use tracing::Level;
 
-use crate::state::AppState;
+use crate::{routes::app, state::AppState};
 
 pub type ApiResult = Result<Response, ErrorResponse>;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let state = AppState::postgres().await?;
-    let app = Router::new()
-        .merge(routes::api_router(state.clone()))
-        .fallback_service(routes::web_service())
-        .method_not_allowed_fallback(routes::method_not_allowed_fallback)
-        .layer(
-            ServiceBuilder::new()
-                .layer(
-                    TraceLayer::new_for_http()
-                        .make_span_with(
-                            tower_http::trace::DefaultMakeSpan::new().level(Level::INFO),
-                        )
-                        .on_response(
-                            tower_http::trace::DefaultOnResponse::new().level(Level::INFO),
-                        ),
-                )
-                .layer(CompressionLayer::new())
-                .layer(TimeoutLayer::new(Duration::from_secs(5))),
-        )
-        .with_state(state);
+    let app = app(state);
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await?;
     axum::serve(listener, app).await?;
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use axum::{
+        body::Body,
+        http::{Request, StatusCode},
+    };
+    use tower::ServiceExt;
+
+    #[tokio::test]
+    async fn test() {
+        let app = app(AppState::mock());
+        let response = app
+            .oneshot(
+                Request::builder()
+                    .uri("/api/user/00000000-0000-0000-000000000000")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+
+        assert_eq!(response.status(), StatusCode::OK);
+    }
 }

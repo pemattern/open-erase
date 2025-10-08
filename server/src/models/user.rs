@@ -10,3 +10,15 @@ pub struct User {
     pub created_at: DateTime<Local>,
     pub updated_at: DateTime<Local>,
 }
+
+impl User {
+    pub fn mock() -> Self {
+        Self {
+            uuid: Uuid::nil(),
+            email: String::from("test@mail.com"),
+            password_hash: String::from("hash"),
+            created_at: DateTime::default(),
+            updated_at: DateTime::default(),
+        }
+    }
+}
