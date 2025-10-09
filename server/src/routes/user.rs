@@ -3,7 +3,7 @@ use axum::{
     extract::{Path, State},
     http::StatusCode,
     middleware,
-    response::{IntoResponse, Response},
+    response::IntoResponse,
     routing::{get, post},
 };
 use uuid::Uuid;
@@ -18,11 +18,13 @@ pub fn router(state: AppState) -> Router<AppState> {
 }
 
 #[axum::debug_handler]
-pub async fn get_user(State(state): State<AppState>, Path(uuid): Path<Uuid>) -> Response {
-    match state.database_service.find_user_by_uuid(uuid).await {
-        Ok(_) => StatusCode::OK.into_response(),
-        Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
-    }
+pub async fn get_user(State(state): State<AppState>, Path(uuid): Path<Uuid>) -> ApiResult {
+    let user = state.database_service.find_user_by_uuid(uuid).await?;
+    let response = match user {
+        Some(user) => (StatusCode::OK, Json(user)).into_response(),
+        None => StatusCode::NOT_FOUND.into_response(),
+    };
+    Ok(response)
 }
 
 #[axum::debug_handler]

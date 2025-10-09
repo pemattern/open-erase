@@ -26,7 +26,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 #[cfg(test)]
 mod test {
-    use crate::{models::User, services::token::TokenService};
+    use crate::{models::User, schemas::user::CreateUserRequest, services::token::TokenService};
 
     use super::*;
 
@@ -98,5 +98,85 @@ mod test {
             .await
             .unwrap();
         assert_eq!(response.status(), StatusCode::OK);
+    }
+
+    #[tokio::test]
+    async fn create_user() {
+        let state = AppState::mock();
+        let app = routes::app(state.clone());
+        let token = TokenService
+            .generate_access_token(Uuid::default(), &state.config)
+            .unwrap();
+        let auth_header = format!("Bearer {}", token);
+        let body = CreateUserRequest {
+            email: String::from("some@mail.com"),
+            password: String::from("abc123"),
+        };
+        let response = app
+            .oneshot(
+                Request::builder()
+                    .uri("/api/user")
+                    .method("POST")
+                    .header("Authorization", auth_header)
+                    .header("Content-Type", "application/json")
+                    .body(Body::from(serde_json::to_string(&body).unwrap()))
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(response.status(), StatusCode::CREATED);
+    }
+
+    #[tokio::test]
+    async fn delete_user() {
+        let state = AppState::mock();
+        let app = routes::app(state.clone());
+        let token = TokenService
+            .generate_access_token(Uuid::default(), &state.config)
+            .unwrap();
+        let auth_header = format!("Bearer {}", token);
+        let uri = format!("/api/user/{}", User::mock().uuid);
+
+        let response = app
+            .clone()
+            .oneshot(
+                Request::builder()
+                    .uri(&uri)
+                    .method("GET")
+                    .header("Authorization", auth_header.clone())
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(response.status(), StatusCode::OK);
+
+        let response = app
+            .clone()
+            .oneshot(
+                Request::builder()
+                    .uri(&uri)
+                    .method("DELETE")
+                    .header("Authorization", auth_header.clone())
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(response.status(), StatusCode::OK);
+
+        let response = app
+            .clone()
+            .oneshot(
+                Request::builder()
+                    .uri(&uri)
+                    .method("GET")
+                    .header("Authorization", auth_header.clone())
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(response.status(), StatusCode::NOT_FOUND);
     }
 }

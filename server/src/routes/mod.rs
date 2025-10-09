@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use axum::Router;
+use axum::{Router, middleware};
 use tower::ServiceBuilder;
 use tower_http::compression::CompressionLayer;
 use tower_http::services::{ServeDir, ServeFile};
