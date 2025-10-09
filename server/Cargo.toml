@@ -21,7 +21,6 @@ sqlx = { version = "0.8.6", features = [
   "tls-rustls",
   "uuid",
 ] }
-thiserror = "2.0.17"
 tokio = { version = "1.47.1", features = ["macros", "rt-multi-thread"] }
 toml = "0.9.7"
 tower = "0.5.2"

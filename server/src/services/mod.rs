@@ -3,28 +3,15 @@ pub mod token;
 
 use std::sync::Arc;
 
-use argon2::password_hash;
-use thiserror::Error;
 use uuid::Uuid;
 
 use crate::{
-    repositories::{DatabaseError, DatabaseRepository, user::DatabaseUserRepository},
+    error::ServiceError,
+    repositories::{DatabaseRepository, user::DatabaseUserRepository},
     schemas::user::{UserPasswordHash, UserResponse},
 };
 
 pub type ServiceResult<T> = Result<T, ServiceError>;
-
-#[derive(Debug, Error)]
-pub enum ServiceError {
-    #[error("an unexpected error occured")]
-    Database(#[from] DatabaseError),
-    #[error("unauthorized")]
-    Hash(password_hash::Error),
-    #[error("an unexpected error occured")]
-    Token(#[from] jsonwebtoken::errors::Error),
-    #[error("an unexpected error occured")]
-    Uuid(#[from] uuid::Error),
-}
 
 #[derive(Clone)]
 pub struct DatabaseService {
@@ -68,17 +55,6 @@ impl DatabaseService {
 
     pub async fn delete_user(&self, uuid: Uuid) -> ServiceResult<()> {
         self.user().delete(uuid).await?;
-        Ok(())
-    }
-
-    pub async fn update_user_password(
-        &self,
-        uuid: Uuid,
-        password_hash: String,
-    ) -> ServiceResult<()> {
-        self.user()
-            .update_password_hash(uuid, password_hash)
-            .await?;
         Ok(())
     }
 }

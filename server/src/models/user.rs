@@ -13,10 +13,10 @@ pub struct User {
 
 impl User {
     pub fn mock() -> Self {
-        Self {
-            uuid: Uuid::nil(),
+        User {
+            uuid: Uuid::default(),
             email: String::from("test@mail.com"),
-            password_hash: String::from("hash"),
+            password_hash: String::from("hash.."),
             created_at: DateTime::default(),
             updated_at: DateTime::default(),
         }

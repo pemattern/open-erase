@@ -3,7 +3,48 @@ use axum::{
     response::{IntoResponse, Response},
 };
 
-use crate::services::ServiceError;
+#[derive(Debug)]
+pub enum ServiceError {
+    Database(DatabaseError),
+    Hash(argon2::password_hash::Error),
+    Token(jsonwebtoken::errors::Error),
+    Uuid(uuid::Error),
+}
+
+impl From<DatabaseError> for ServiceError {
+    fn from(value: DatabaseError) -> Self {
+        Self::Database(value)
+    }
+}
+
+impl From<argon2::password_hash::Error> for ServiceError {
+    fn from(value: argon2::password_hash::Error) -> Self {
+        Self::Hash(value)
+    }
+}
+
+impl From<jsonwebtoken::errors::Error> for ServiceError {
+    fn from(value: jsonwebtoken::errors::Error) -> Self {
+        Self::Token(value)
+    }
+}
+
+impl From<uuid::Error> for ServiceError {
+    fn from(value: uuid::Error) -> Self {
+        Self::Uuid(value)
+    }
+}
+
+#[derive(Debug)]
+pub enum DatabaseError {
+    Postgres(sqlx::Error),
+}
+
+impl From<sqlx::Error> for DatabaseError {
+    fn from(value: sqlx::Error) -> Self {
+        Self::Postgres(value)
+    }
+}
 
 pub struct ErrorResponse {
     status_code: u16,

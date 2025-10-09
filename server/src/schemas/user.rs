@@ -10,11 +10,6 @@ pub struct CreateUserRequest {
     pub password: String,
 }
 
-#[derive(Deserialize)]
-pub struct UpdateUserPasswordRequest {
-    pub password: String,
-}
-
 pub struct UserResponse {
     pub uuid: Uuid,
     pub email: String,

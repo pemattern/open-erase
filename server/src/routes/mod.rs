@@ -22,6 +22,28 @@ const USER_PATH: &str = "/user";
 const STATIC_ASSETS_PATH: &str = "/dist";
 const INDEX_HTML_PATH: &str = "/dist/index.html";
 
+pub fn app(state: AppState) -> Router {
+    Router::new()
+        .merge(api_router(state.clone()))
+        .fallback_service(web_service())
+        .method_not_allowed_fallback(method_not_allowed_fallback)
+        .layer(
+            ServiceBuilder::new()
+                .layer(
+                    TraceLayer::new_for_http()
+                        .make_span_with(
+                            tower_http::trace::DefaultMakeSpan::new().level(Level::INFO),
+                        )
+                        .on_response(
+                            tower_http::trace::DefaultOnResponse::new().level(Level::INFO),
+                        ),
+                )
+                .layer(CompressionLayer::new())
+                .layer(TimeoutLayer::new(Duration::from_secs(5))),
+        )
+        .with_state(state)
+}
+
 pub fn api_router(state: AppState) -> Router<AppState> {
     Router::new().nest(
         API_PATH,

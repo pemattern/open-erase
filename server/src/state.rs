@@ -4,7 +4,7 @@ use sqlx::postgres::PgPoolOptions;
 
 use crate::{
     config::Config,
-    repositories::{DatabaseRepository, MockRepository, PostgresRepository},
+    repositories::{DatabaseRepository, PostgresRepository},
     services::{DatabaseService, hashing::HashingService, token::TokenService},
 };
 
@@ -23,11 +23,6 @@ impl AppState {
         sqlx::migrate!("./migrations").run(&pool).await?;
         let repo = PostgresRepository::new(pool);
         Ok(Self::init(repo))
-    }
-
-    pub fn mock() -> Self {
-        let repo = MockRepository::new();
-        Self::init(repo)
     }
 
     fn init(repo: impl DatabaseRepository + 'static) -> Self {
@@ -53,4 +48,12 @@ fn db_url_from_envs() -> Result<String, Box<dyn std::error::Error>> {
     let db = env::var("POSTGRES_DB")?;
     let url = format!("postgres://{username}:{password}@{host}:{port}/{db}");
     Ok(url)
+}
+
+#[cfg(test)]
+impl AppState {
+    pub fn mock() -> Self {
+        let repo = crate::repositories::mocks::MockRepository::new();
+        Self::init(repo)
+    }
 }

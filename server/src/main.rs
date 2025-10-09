@@ -11,21 +11,23 @@ mod state;
 use axum::response::Response;
 use error::ErrorResponse;
 
-use crate::{routes::app, state::AppState};
+use crate::state::AppState;
 
 pub type ApiResult = Result<Response, ErrorResponse>;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let state = AppState::postgres().await?;
-    let app = app(state);
+    let app = routes::app(state);
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await?;
     axum::serve(listener, app).await?;
     Ok(())
 }
 
 #[cfg(test)]
-mod tests {
+mod test {
+    use crate::services::token::TokenService;
+
     use super::*;
 
     use axum::{
@@ -33,20 +35,27 @@ mod tests {
         http::{Request, StatusCode},
     };
     use tower::ServiceExt;
+    use uuid::Uuid;
 
     #[tokio::test]
-    async fn test() {
-        let app = app(AppState::mock());
+    async fn get_user_by_uuid() {
+        let state = AppState::mock();
+        let app = routes::app(state.clone());
+        let token = TokenService
+            .generate_access_token(Uuid::default(), &state.config)
+            .unwrap();
+        let uri = format!("/api/user/{}", Uuid::default());
+        let auth_header = format!("Bearer {}", token);
         let response = app
             .oneshot(
                 Request::builder()
-                    .uri("/api/user/00000000-0000-0000-000000000000")
+                    .uri(&uri)
+                    .header("Authorization", auth_header)
                     .body(Body::empty())
                     .unwrap(),
             )
             .await
             .unwrap();
-
         assert_eq!(response.status(), StatusCode::OK);
     }
 }
