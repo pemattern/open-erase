@@ -56,10 +56,7 @@ impl From<ServiceError> for ErrorResponse {
         tracing::error!("{:?}", error);
         match error {
             ServiceError::Database(_error) => ErrorResponse::internal_server_error(),
-            ServiceError::Hash(error) => match error {
-                argon2::password_hash::Error::Password => ErrorResponse::unauthorized(),
-                _ => ErrorResponse::internal_server_error(),
-            },
+            ServiceError::Hash(_error) => ErrorResponse::unauthorized(),
             ServiceError::Token(_error) => ErrorResponse::internal_server_error(),
             ServiceError::Uuid(_error) => ErrorResponse::internal_server_error(),
         }

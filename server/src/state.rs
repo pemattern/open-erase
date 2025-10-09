@@ -18,6 +18,7 @@ pub struct AppState {
 
 impl AppState {
     pub async fn postgres() -> Result<Self, Box<dyn std::error::Error>> {
+        tracing_subscriber::fmt().compact().init();
         let db_url = db_url_from_envs()?;
         let pool = PgPoolOptions::new().connect(&db_url).await?;
         sqlx::migrate!("./migrations").run(&pool).await?;
@@ -26,7 +27,6 @@ impl AppState {
     }
 
     fn init(repo: impl DatabaseRepository + 'static) -> Self {
-        tracing_subscriber::fmt().compact().init();
         let config = Config::load();
         let database_service = DatabaseService::new(repo);
         let hashing_service = HashingService;

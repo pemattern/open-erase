@@ -26,7 +26,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 #[cfg(test)]
 mod test {
-    use crate::services::token::TokenService;
+    use crate::{models::User, services::token::TokenService};
 
     use super::*;
 
@@ -34,8 +34,49 @@ mod test {
         body::Body,
         http::{Request, StatusCode},
     };
+    use base64::{Engine, prelude::BASE64_STANDARD};
     use tower::ServiceExt;
     use uuid::Uuid;
+
+    #[tokio::test]
+    async fn login() {
+        let state = AppState::mock();
+        let app = routes::app(state.clone());
+        let uri = "/api/auth/login";
+        let valid_email_password = format!("{}:{}", User::mock().email, "password123");
+        let valid_auth_header = format!("Basic {}", BASE64_STANDARD.encode(valid_email_password));
+
+        let invalid_email_password = format!("{}:{}", User::mock().email, "password456");
+        let invalid_auth_header =
+            format!("Basic {}", BASE64_STANDARD.encode(invalid_email_password));
+
+        let response = app
+            .clone()
+            .oneshot(
+                Request::builder()
+                    .method("POST")
+                    .uri(uri)
+                    .header("Authorization", valid_auth_header)
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(response.status(), StatusCode::OK);
+
+        let response = app
+            .oneshot(
+                Request::builder()
+                    .method("POST")
+                    .uri(uri)
+                    .header("Authorization", invalid_auth_header)
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+    }
 
     #[tokio::test]
     async fn get_user_by_uuid() {
