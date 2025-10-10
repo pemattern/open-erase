@@ -8,6 +8,7 @@ use tower_http::timeout::TimeoutLayer;
 use tower_http::trace::TraceLayer;
 use tracing::Level;
 
+use crate::middleware::log::log;
 use crate::state::AppState;
 use crate::{ApiResult, error::ErrorResponse};
 
@@ -39,7 +40,8 @@ pub fn app(state: AppState) -> Router {
                         ),
                 )
                 .layer(CompressionLayer::new())
-                .layer(TimeoutLayer::new(Duration::from_secs(5))),
+                .layer(TimeoutLayer::new(Duration::from_secs(5)))
+                .layer(middleware::from_fn(log)),
         )
         .with_state(state)
 }

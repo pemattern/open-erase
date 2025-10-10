@@ -1,9 +1,11 @@
+use std::sync::Arc;
+
 use axum::{
     body::Body,
     response::{IntoResponse, Response},
 };
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum ServiceError {
     Database(DatabaseError),
     Hash(argon2::password_hash::Error),
@@ -35,20 +37,33 @@ impl From<uuid::Error> for ServiceError {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum DatabaseError {
-    Postgres(sqlx::Error),
+    // Arc required because sqlx::Error doesnt derive Clone
+    Postgres(Arc<sqlx::Error>),
 }
 
 impl From<sqlx::Error> for DatabaseError {
     fn from(value: sqlx::Error) -> Self {
-        Self::Postgres(value)
+        Self::Postgres(Arc::new(value))
     }
 }
 
 pub struct ErrorResponse {
     status_code: u16,
     message: String,
+}
+
+impl IntoResponse for ServiceError {
+    fn into_response(self) -> Response {
+        let mut error_response = match self {
+            ServiceError::Hash(_) => ErrorResponse::unauthorized(),
+            _ => ErrorResponse::internal_server_error(),
+        }
+        .into_response();
+        error_response.extensions_mut().insert(self);
+        error_response
+    }
 }
 
 impl From<ServiceError> for ErrorResponse {
