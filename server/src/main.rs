@@ -17,6 +17,7 @@ pub type ApiResult = Result<Response, ErrorResponse>;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    tracing_subscriber::fmt().compact().init();
     let state = AppState::postgres().await?;
     let app = routes::app(state);
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await?;

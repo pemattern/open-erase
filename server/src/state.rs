@@ -18,8 +18,7 @@ pub struct AppState {
 
 impl AppState {
     pub async fn postgres() -> Result<Self, Box<dyn std::error::Error>> {
-        tracing_subscriber::fmt().compact().init();
-        let db_url = db_url_from_envs()?;
+        let db_url = db_url_from_envs();
         let pool = PgPoolOptions::new().connect(&db_url).await?;
         sqlx::migrate!("./migrations").run(&pool).await?;
         let repo = PostgresRepository::new(pool);
@@ -40,14 +39,13 @@ impl AppState {
     }
 }
 
-fn db_url_from_envs() -> Result<String, Box<dyn std::error::Error>> {
-    let username = env::var("POSTGRES_USER")?;
-    let password = env::var("POSTGRES_PASSWORD")?;
-    let host = env::var("POSTGRES_HOST")?;
-    let port = env::var("POSTGRES_PORT")?;
-    let db = env::var("POSTGRES_DB")?;
-    let url = format!("postgres://{username}:{password}@{host}:{port}/{db}");
-    Ok(url)
+fn db_url_from_envs() -> String {
+    let username = env::var("POSTGRES_USER").unwrap_or("postgres".into());
+    let password = env::var("POSTGRES_PASSWORD").unwrap_or("postgres".into());
+    let host = env::var("POSTGRES_HOST").unwrap_or("postgres".into());
+    let port = env::var("POSTGRES_PORT").unwrap_or("5432".into());
+    let db = env::var("POSTGRES_DB").unwrap_or("postgres".into());
+    format!("postgres://{username}:{password}@{host}:{port}/{db}")
 }
 
 #[cfg(test)]

@@ -1,4 +1,4 @@
-FROM rust:1.88.0 AS base
+FROM rust:1.90.0 AS base
 
 FROM base AS web-builder
 WORKDIR /web
@@ -9,10 +9,13 @@ RUN trunk build --release
 
 FROM base AS server-builder
 WORKDIR /server
-COPY server ./
-RUN cargo build --release
+COPY server/Cargo.lock server/Cargo.toml ./
+RUN mkdir src && echo "fn main() {}" > src/main.rs && cargo build --release && rm -rf src
+COPY server/src ./src
+COPY server/migrations ./migrations
+RUN touch src/main.rs && cargo build --release
 
-FROM debian:bookworm-slim AS runtime
+FROM debian:trixie-slim AS runtime
 COPY --from=server-builder /server/target/release/open-erase-server /open-erase-server
 COPY --from=web-builder /web/dist /dist
 ENTRYPOINT [ "/open-erase-server" ]
