@@ -1,7 +1,8 @@
-use axum::{Json, Router, extract::State, response::IntoResponse, routing::post};
+use axum::{Router, extract::State, routing::post};
 use axum_extra::{
     TypedHeader,
     headers::{Authorization, authorization::Basic},
+    typed_header::TypedHeaderRejection,
 };
 
 use crate::{AppResult, error::ClientError, schemas::token::TokenResponse, state::AppState};
@@ -14,23 +15,24 @@ pub fn router() -> Router<AppState> {
 #[utoipa::path(post, path = "/auth/login")]
 pub async fn login(
     State(state): State<AppState>,
-    TypedHeader(authorization): TypedHeader<Authorization<Basic>>,
-) -> AppResult<impl IntoResponse> {
+    authorization_header: Result<TypedHeader<Authorization<Basic>>, TypedHeaderRejection>,
+) -> AppResult<TokenResponse> {
+    let authorization_header_value = authorization_header.map_err(|_| ClientError::Unauthorized)?;
     let user = state
         .database_service
-        .find_user_by_email(authorization.username())
+        .find_user_by_email(authorization_header_value.username())
         .await?
-        .ok_or(ClientError::NotFound)?;
+        .ok_or(ClientError::Unauthorized)?;
     state
         .hashing_service
-        .verify_password(authorization.password(), &user.password_hash)?;
+        .verify_password(authorization_header_value.password(), &user.password_hash)
+        .map_err(|_| ClientError::Unauthorized)?;
     let access_token = state
         .token_service
         .generate_access_token(user.id, &state.config)?;
-    Ok(Json(TokenResponse {
+    Ok(TokenResponse {
         access_token,
         token_type: String::from("Bearer"),
         expires_in: state.config.access_token_validity_secs,
     })
-    .into_response())
 }

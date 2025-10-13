@@ -6,12 +6,11 @@ use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::{
-    error::ServerError,
+    ServiceResult,
+    error::ServiceError,
     models::User,
     repositories::{DatabaseRepository, user::DatabaseUserRepository},
 };
-
-pub type ServerResult<T> = Result<T, ServerError>;
 
 #[derive(Clone)]
 pub struct DatabaseService {
@@ -30,19 +29,19 @@ impl DatabaseService {
 }
 
 impl DatabaseService {
-    pub async fn find_user_by_id(&self, id: Uuid) -> ServerResult<Option<User>> {
+    pub async fn find_user_by_id(&self, id: Uuid) -> ServiceResult<Option<User>> {
         Ok(self.user().find_by_id(id).await?)
     }
 
-    pub async fn find_user_by_email(&self, email: &str) -> ServerResult<Option<User>> {
+    pub async fn find_user_by_email(&self, email: &str) -> ServiceResult<Option<User>> {
         Ok(self.user().find_by_email(email).await?)
     }
 
-    pub async fn create_user(&self, email: String, password_hash: String) -> ServerResult<User> {
+    pub async fn create_user(&self, email: String, password_hash: String) -> ServiceResult<User> {
         Ok(self.user().create(email, password_hash).await?)
     }
 
-    pub async fn delete_user(&self, uuid: Uuid) -> ServerResult<User> {
+    pub async fn delete_user(&self, uuid: Uuid) -> ServiceResult<User> {
         Ok(self.user().delete(uuid).await?)
     }
 }

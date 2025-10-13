@@ -7,14 +7,14 @@ use axum::{
 
 pub enum AppError {
     Client(ClientError),
-    Server(ServerError),
+    Service(ServiceError),
 }
 
 impl IntoResponse for AppError {
     fn into_response(self) -> Response {
         match self {
             AppError::Client(client_error) => client_error.into_response(),
-            AppError::Server(server_error) => server_error.into_response(),
+            AppError::Service(internal_error) => internal_error.into_response(),
         }
     }
 }
@@ -25,9 +25,9 @@ impl From<ClientError> for AppError {
     }
 }
 
-impl From<ServerError> for AppError {
-    fn from(value: ServerError) -> Self {
-        Self::Server(value)
+impl From<ServiceError> for AppError {
+    fn from(value: ServiceError) -> Self {
+        Self::Service(value)
     }
 }
 
@@ -49,14 +49,14 @@ impl IntoResponse for ClientError {
 }
 
 #[derive(Debug)]
-pub enum ServerError {
+pub enum ServiceError {
     Database(DatabaseError),
     Hash(argon2::password_hash::Error),
     Token(jsonwebtoken::errors::Error),
     Uuid(uuid::Error),
 }
 
-impl IntoResponse for ServerError {
+impl IntoResponse for ServiceError {
     fn into_response(self) -> Response {
         let mut error_response = ErrorResponse::internal_server_error().into_response();
         error_response.extensions_mut().insert(Arc::new(self));
@@ -64,25 +64,25 @@ impl IntoResponse for ServerError {
     }
 }
 
-impl From<DatabaseError> for ServerError {
+impl From<DatabaseError> for ServiceError {
     fn from(value: DatabaseError) -> Self {
         Self::Database(value)
     }
 }
 
-impl From<argon2::password_hash::Error> for ServerError {
+impl From<argon2::password_hash::Error> for ServiceError {
     fn from(value: argon2::password_hash::Error) -> Self {
         Self::Hash(value)
     }
 }
 
-impl From<jsonwebtoken::errors::Error> for ServerError {
+impl From<jsonwebtoken::errors::Error> for ServiceError {
     fn from(value: jsonwebtoken::errors::Error) -> Self {
         Self::Token(value)
     }
 }
 
-impl From<uuid::Error> for ServerError {
+impl From<uuid::Error> for ServiceError {
     fn from(value: uuid::Error) -> Self {
         Self::Uuid(value)
     }
@@ -90,12 +90,13 @@ impl From<uuid::Error> for ServerError {
 
 #[derive(Debug)]
 pub enum DatabaseError {
-    Postgres(sqlx::Error),
+    Sqlx(sqlx::Error),
+    Test,
 }
 
 impl From<sqlx::Error> for DatabaseError {
     fn from(value: sqlx::Error) -> Self {
-        Self::Postgres(value)
+        Self::Sqlx(value)
     }
 }
 
@@ -104,14 +105,14 @@ struct ErrorResponse {
     message: String,
 }
 
-impl From<ServerError> for ErrorResponse {
-    fn from(error: ServerError) -> Self {
+impl From<ServiceError> for ErrorResponse {
+    fn from(error: ServiceError) -> Self {
         tracing::error!("{:?}", error);
         match error {
-            ServerError::Database(_error) => ErrorResponse::internal_server_error(),
-            ServerError::Hash(_error) => ErrorResponse::unauthorized(),
-            ServerError::Token(_error) => ErrorResponse::internal_server_error(),
-            ServerError::Uuid(_error) => ErrorResponse::internal_server_error(),
+            ServiceError::Database(_error) => ErrorResponse::internal_server_error(),
+            ServiceError::Hash(_error) => ErrorResponse::unauthorized(),
+            ServiceError::Token(_error) => ErrorResponse::internal_server_error(),
+            ServiceError::Uuid(_error) => ErrorResponse::internal_server_error(),
         }
     }
 }

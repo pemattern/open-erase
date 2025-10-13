@@ -3,28 +3,25 @@ use argon2::{
     password_hash::{SaltString, rand_core::OsRng},
 };
 
-use crate::services::ServerError;
+use crate::{ServiceResult, services::ServiceError};
 
 #[derive(Clone)]
 pub struct HashingService;
 
 impl HashingService {
-    pub fn hash_password(&self, password: &str) -> Result<String, ServerError> {
+    pub fn hash_password(&self, password: &str) -> ServiceResult<String> {
         let argon2 = Argon2::default();
         let salt_string = SaltString::generate(&mut OsRng);
         argon2
             .hash_password(password.as_bytes(), &salt_string)
             .map(|hash| hash.to_string())
-            .map_err(ServerError::Hash)
+            .map_err(ServiceError::Hash)
     }
 
-    pub fn verify_password(&self, password: &str, password_hash: &str) -> Result<(), ServerError> {
-        let parsed_hash = match PasswordHash::new(password_hash) {
-            Ok(hash) => hash,
-            Err(err) => return Err(ServerError::Hash(err)),
-        };
+    pub fn verify_password(&self, password: &str, password_hash: &str) -> ServiceResult<()> {
+        let parsed_hash = PasswordHash::new(password_hash).map_err(ServiceError::Hash)?;
         Argon2::default()
             .verify_password(password.as_bytes(), &parsed_hash)
-            .map_err(ServerError::Hash)
+            .map_err(ServiceError::Hash)
     }
 }

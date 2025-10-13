@@ -8,11 +8,14 @@ mod schemas;
 mod services;
 mod state;
 
-use axum::response::IntoResponse;
+use crate::{
+    error::{AppError, DatabaseError, ServiceError},
+    state::AppState,
+};
 
-use crate::{error::AppError, state::AppState};
-
-pub type AppResult<T: IntoResponse> = Result<T, AppError>;
+pub type AppResult<T> = Result<T, AppError>;
+pub type ServiceResult<T> = Result<T, ServiceError>;
+pub type DatabaseResult<T> = Result<T, DatabaseError>;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {

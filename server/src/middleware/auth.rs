@@ -24,7 +24,8 @@ pub async fn authorize(
 
     let uuid = state
         .token_service
-        .validate_access_token(authorization_header_value, &state.config)?;
+        .validate_access_token(authorization_header_value, &state.config)
+        .map_err(|_| ClientError::Unauthorized)?;
     request.extensions_mut().insert(uuid);
     Ok(next.run(request).await)
 }

@@ -5,7 +5,7 @@ use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation, decode, encode}
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::{config::Config, services::ServerResult};
+use crate::{ServiceResult, config::Config};
 
 #[derive(Serialize, Deserialize)]
 pub struct Claims {
@@ -19,7 +19,7 @@ pub struct Claims {
 pub struct TokenService;
 
 impl TokenService {
-    pub fn generate_access_token(&self, user_uuid: Uuid, config: &Config) -> ServerResult<String> {
+    pub fn generate_access_token(&self, user_uuid: Uuid, config: &Config) -> ServiceResult<String> {
         let sub = user_uuid.to_string();
         let now = Utc::now();
         let iat = now.timestamp() as usize;
@@ -37,7 +37,7 @@ impl TokenService {
         &self,
         authorization_header: &str,
         config: &Config,
-    ) -> ServerResult<Uuid> {
+    ) -> ServiceResult<Uuid> {
         let key = DecodingKey::from_secret(config.secret.as_bytes());
         let mut validation = Validation::new(jsonwebtoken::Algorithm::HS256);
         validation.set_issuer(&[&config.issuer]);

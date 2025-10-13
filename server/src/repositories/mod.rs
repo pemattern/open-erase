@@ -3,12 +3,7 @@ pub mod mocks;
 
 pub mod user;
 
-use crate::{
-    error::DatabaseError,
-    repositories::user::{DatabaseUserRepository, PostgresUserRepository},
-};
-
-pub type DatabaseResult<T> = Result<T, DatabaseError>;
+use crate::repositories::user::{DatabaseUserRepository, PostgresUserRepository};
 
 pub trait DatabaseRepository: Send + Sync {
     fn user(&self) -> &dyn DatabaseUserRepository;

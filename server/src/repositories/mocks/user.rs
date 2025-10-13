@@ -4,10 +4,7 @@ use async_trait::async_trait;
 use chrono::DateTime;
 use uuid::Uuid;
 
-use crate::{
-    models::User,
-    repositories::{DatabaseResult, user::DatabaseUserRepository},
-};
+use crate::{DatabaseResult, models::User, repositories::user::DatabaseUserRepository};
 
 impl User {
     pub fn mock() -> Self {
@@ -69,7 +66,11 @@ impl DatabaseUserRepository for MockUserRepository {
 
     async fn delete(&self, uuid: Uuid) -> DatabaseResult<User> {
         let mut data = self.data.lock().unwrap();
-        data.retain(|user| user.id != uuid);
-        Ok(User::mock())
+        let user = data
+            .extract_if(.., |user| user.id == uuid)
+            .collect::<Vec<User>>()
+            .first()
+            .cloned();
+        user.ok_or(crate::error::DatabaseError::Test)
     }
 }
