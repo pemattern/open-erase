@@ -8,12 +8,11 @@ mod schemas;
 mod services;
 mod state;
 
-use axum::response::Response;
-use error::ErrorResponse;
+use axum::response::IntoResponse;
 
-use crate::state::AppState;
+use crate::{error::AppError, state::AppState};
 
-pub type ApiResult = Result<Response, ErrorResponse>;
+pub type AppResult<T: IntoResponse> = Result<T, AppError>;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {

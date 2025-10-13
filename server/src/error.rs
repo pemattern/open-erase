@@ -5,75 +5,113 @@ use axum::{
     response::{IntoResponse, Response},
 };
 
-#[derive(Debug, Clone)]
-pub enum ServiceError {
+pub enum AppError {
+    Client(ClientError),
+    Server(ServerError),
+}
+
+impl IntoResponse for AppError {
+    fn into_response(self) -> Response {
+        match self {
+            AppError::Client(client_error) => client_error.into_response(),
+            AppError::Server(server_error) => server_error.into_response(),
+        }
+    }
+}
+
+impl From<ClientError> for AppError {
+    fn from(value: ClientError) -> Self {
+        Self::Client(value)
+    }
+}
+
+impl From<ServerError> for AppError {
+    fn from(value: ServerError) -> Self {
+        Self::Server(value)
+    }
+}
+
+pub enum ClientError {
+    MethodNotAllowed,
+    NotFound,
+    Unauthorized,
+}
+
+impl IntoResponse for ClientError {
+    fn into_response(self) -> Response {
+        let error_response = match &self {
+            ClientError::MethodNotAllowed => ErrorResponse::method_not_allowed(),
+            ClientError::NotFound => ErrorResponse::not_found(),
+            ClientError::Unauthorized => ErrorResponse::unauthorized(),
+        };
+        error_response.into_response()
+    }
+}
+
+#[derive(Debug)]
+pub enum ServerError {
     Database(DatabaseError),
     Hash(argon2::password_hash::Error),
     Token(jsonwebtoken::errors::Error),
     Uuid(uuid::Error),
 }
 
-impl From<DatabaseError> for ServiceError {
+impl IntoResponse for ServerError {
+    fn into_response(self) -> Response {
+        let mut error_response = ErrorResponse::internal_server_error().into_response();
+        error_response.extensions_mut().insert(Arc::new(self));
+        error_response
+    }
+}
+
+impl From<DatabaseError> for ServerError {
     fn from(value: DatabaseError) -> Self {
         Self::Database(value)
     }
 }
 
-impl From<argon2::password_hash::Error> for ServiceError {
+impl From<argon2::password_hash::Error> for ServerError {
     fn from(value: argon2::password_hash::Error) -> Self {
         Self::Hash(value)
     }
 }
 
-impl From<jsonwebtoken::errors::Error> for ServiceError {
+impl From<jsonwebtoken::errors::Error> for ServerError {
     fn from(value: jsonwebtoken::errors::Error) -> Self {
         Self::Token(value)
     }
 }
 
-impl From<uuid::Error> for ServiceError {
+impl From<uuid::Error> for ServerError {
     fn from(value: uuid::Error) -> Self {
         Self::Uuid(value)
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub enum DatabaseError {
-    // Arc required because sqlx::Error doesnt derive Clone
-    Postgres(Arc<sqlx::Error>),
+    Postgres(sqlx::Error),
 }
 
 impl From<sqlx::Error> for DatabaseError {
     fn from(value: sqlx::Error) -> Self {
-        Self::Postgres(Arc::new(value))
+        Self::Postgres(value)
     }
 }
 
-pub struct ErrorResponse {
+struct ErrorResponse {
     status_code: u16,
     message: String,
 }
 
-impl IntoResponse for ServiceError {
-    fn into_response(self) -> Response {
-        let mut error_response = match self {
-            ServiceError::Hash(_) => ErrorResponse::unauthorized(),
-            _ => ErrorResponse::internal_server_error(),
-        }
-        .into_response();
-        error_response.extensions_mut().insert(self);
-        error_response
-    }
-}
-
-impl From<ServiceError> for ErrorResponse {
-    fn from(error: ServiceError) -> Self {
+impl From<ServerError> for ErrorResponse {
+    fn from(error: ServerError) -> Self {
         tracing::error!("{:?}", error);
         match error {
-            ServiceError::Database(_error) => ErrorResponse::internal_server_error(),
-            ServiceError::Hash(_error) => ErrorResponse::unauthorized(),
-            ServiceError::Token(_error) => ErrorResponse::internal_server_error(),
-            ServiceError::Uuid(_error) => ErrorResponse::internal_server_error(),
+            ServerError::Database(_error) => ErrorResponse::internal_server_error(),
+            ServerError::Hash(_error) => ErrorResponse::unauthorized(),
+            ServerError::Token(_error) => ErrorResponse::internal_server_error(),
+            ServerError::Uuid(_error) => ErrorResponse::internal_server_error(),
         }
     }
 }

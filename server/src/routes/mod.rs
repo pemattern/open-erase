@@ -8,9 +8,10 @@ use tower_http::timeout::TimeoutLayer;
 use tower_http::trace::TraceLayer;
 use tracing::Level;
 
+use crate::AppResult;
+use crate::error::ClientError;
 use crate::middleware::log::log;
 use crate::state::AppState;
-use crate::{ApiResult, error::ErrorResponse};
 
 mod auth;
 mod docs;
@@ -60,6 +61,6 @@ pub fn web_service() -> ServeDir<ServeFile> {
     ServeDir::new(STATIC_ASSETS_PATH).fallback(ServeFile::new(INDEX_HTML_PATH))
 }
 
-pub async fn method_not_allowed_fallback() -> ApiResult {
-    Err(ErrorResponse::method_not_allowed())
+pub async fn method_not_allowed_fallback() -> AppResult<()> {
+    Err(ClientError::MethodNotAllowed.into())
 }

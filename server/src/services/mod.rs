@@ -6,12 +6,12 @@ use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::{
-    error::ServiceError,
+    error::ServerError,
     repositories::{DatabaseRepository, user::DatabaseUserRepository},
     schemas::user::{UserPasswordHash, UserResponse},
 };
 
-pub type ServiceResult<T> = Result<T, ServiceError>;
+pub type ServerResult<T> = Result<T, ServerError>;
 
 #[derive(Clone)]
 pub struct DatabaseService {
@@ -30,12 +30,12 @@ impl DatabaseService {
 }
 
 impl DatabaseService {
-    pub async fn find_user_by_uuid(&self, uuid: Uuid) -> ServiceResult<Option<UserResponse>> {
+    pub async fn find_user_by_uuid(&self, uuid: Uuid) -> ServerResult<Option<UserResponse>> {
         let user = self.user().find_by_uuid(uuid).await?;
         Ok(user.map(UserResponse::from))
     }
 
-    pub async fn find_user_by_email(&self, email: &str) -> ServiceResult<Option<UserResponse>> {
+    pub async fn find_user_by_email(&self, email: &str) -> ServerResult<Option<UserResponse>> {
         let user = self.user().find_by_email(email).await?;
         Ok(user.map(UserResponse::from))
     }
@@ -43,17 +43,17 @@ impl DatabaseService {
     pub async fn find_user_password_hash_by_email(
         &self,
         email: &str,
-    ) -> ServiceResult<Option<UserPasswordHash>> {
+    ) -> ServerResult<Option<UserPasswordHash>> {
         let user = self.user().find_by_email(email).await?;
         Ok(user.map(UserPasswordHash::from))
     }
 
-    pub async fn create_user(&self, email: String, password_hash: String) -> ServiceResult<()> {
+    pub async fn create_user(&self, email: String, password_hash: String) -> ServerResult<()> {
         self.user().create(email, password_hash).await?;
         Ok(())
     }
 
-    pub async fn delete_user(&self, uuid: Uuid) -> ServiceResult<()> {
+    pub async fn delete_user(&self, uuid: Uuid) -> ServerResult<()> {
         self.user().delete(uuid).await?;
         Ok(())
     }

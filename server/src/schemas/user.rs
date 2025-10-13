@@ -1,3 +1,8 @@
+use axum::{
+    Json,
+    http::StatusCode,
+    response::{IntoResponse, Response},
+};
 use chrono::{DateTime, Local};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -16,6 +21,12 @@ pub struct UserResponse {
     pub email: String,
     pub created_at: DateTime<Local>,
     pub updated_at: DateTime<Local>,
+}
+
+impl IntoResponse for UserResponse {
+    fn into_response(self) -> Response {
+        (StatusCode::OK, Json(self)).into_response()
+    }
 }
 
 pub struct UserPasswordHash {

@@ -1,11 +1,13 @@
-use axum::{extract::Request, middleware::Next};
+use std::sync::Arc;
 
-use crate::{ApiResult, error::ServiceError};
+use axum::{extract::Request, middleware::Next, response::IntoResponse};
+
+use crate::{AppResult, error::ServerError};
 
 #[axum::debug_middleware]
-pub async fn log(request: Request, next: Next) -> ApiResult {
+pub async fn log(request: Request, next: Next) -> AppResult<impl IntoResponse> {
     let extensions = request.extensions();
-    if let Some(service_error) = extensions.get::<ServiceError>() {
+    if let Some(service_error) = extensions.get::<Arc<ServerError>>() {
         tracing::error!("{:#?}", service_error);
     }
     Ok(next.run(request).await)

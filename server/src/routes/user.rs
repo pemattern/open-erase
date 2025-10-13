@@ -8,7 +8,13 @@ use axum::{
 };
 use uuid::Uuid;
 
-use crate::{ApiResult, middleware::auth, schemas::user::CreateUserRequest, state::AppState};
+use crate::{
+    AppResult,
+    error::ClientError,
+    middleware::auth,
+    schemas::user::{CreateUserRequest, UserResponse},
+    state::AppState,
+};
 
 pub fn router(state: AppState) -> Router<AppState> {
     Router::new()
@@ -18,12 +24,12 @@ pub fn router(state: AppState) -> Router<AppState> {
 }
 
 #[axum::debug_handler]
-pub async fn get_user(State(state): State<AppState>, Path(uuid): Path<Uuid>) -> ApiResult {
+pub async fn get_user(
+    State(state): State<AppState>,
+    Path(uuid): Path<Uuid>,
+) -> AppResult<UserResponse> {
     let user = state.database_service.find_user_by_uuid(uuid).await?;
-    let response = match user {
-        Some(user) => (StatusCode::OK, Json(user)).into_response(),
-        None => StatusCode::NOT_FOUND.into_response(),
-    };
+    let response = user.ok_or(ClientError::NotFound)?;
     Ok(response)
 }
 
@@ -31,7 +37,7 @@ pub async fn get_user(State(state): State<AppState>, Path(uuid): Path<Uuid>) -> 
 pub async fn post_user(
     State(state): State<AppState>,
     Json(user): Json<CreateUserRequest>,
-) -> ApiResult {
+) -> AppResult {
     let password_hash = state.hashing_service.hash_password(&user.password)?;
     state
         .database_service
@@ -41,7 +47,7 @@ pub async fn post_user(
 }
 
 #[axum::debug_handler]
-pub async fn delete_user(State(state): State<AppState>, Path(uuid): Path<Uuid>) -> ApiResult {
+pub async fn delete_user(State(state): State<AppState>, Path(uuid): Path<Uuid>) -> AppResult {
     state.database_service.delete_user(uuid).await?;
     Ok(StatusCode::OK.into_response())
 }
