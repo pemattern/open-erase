@@ -26,7 +26,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 #[cfg(test)]
 mod test {
-    use crate::{models::User, schemas::user::CreateUserRequest, services::token::TokenService};
+    use crate::{models::User, schemas::user::PostUserRequest, services::token::TokenService};
 
     use super::*;
 
@@ -108,7 +108,7 @@ mod test {
             .generate_access_token(Uuid::default(), &state.config)
             .unwrap();
         let auth_header = format!("Bearer {}", token);
-        let body = CreateUserRequest {
+        let body = PostUserRequest {
             email: String::from("some@mail.com"),
             password: String::from("abc123"),
         };
@@ -135,7 +135,7 @@ mod test {
             .generate_access_token(Uuid::default(), &state.config)
             .unwrap();
         let auth_header = format!("Bearer {}", token);
-        let uri = format!("/api/user/{}", User::mock().uuid);
+        let uri = format!("/api/user/{}", User::mock().id);
 
         let response = app
             .clone()
@@ -163,7 +163,7 @@ mod test {
             )
             .await
             .unwrap();
-        assert_eq!(response.status(), StatusCode::OK);
+        assert_eq!(response.status(), StatusCode::NO_CONTENT);
 
         let response = app
             .clone()

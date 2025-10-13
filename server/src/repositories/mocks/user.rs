@@ -12,7 +12,7 @@ use crate::{
 impl User {
     pub fn mock() -> Self {
         User {
-            uuid: Uuid::default(),
+            id: Uuid::default(),
             email: String::from("test@mail.com"),
             password_hash: String::from(
                 "$argon2id$v=19$m=16,t=2,p=1$NjFWcEMwUEQ0dmZXcDMwSg$TfJtuSrudRp6hhV2mFSt3g",
@@ -38,13 +38,13 @@ impl MockUserRepository {
 
 #[async_trait]
 impl DatabaseUserRepository for MockUserRepository {
-    async fn find_by_uuid(&self, uuid: Uuid) -> DatabaseResult<Option<User>> {
+    async fn find_by_id(&self, uuid: Uuid) -> DatabaseResult<Option<User>> {
         Ok(self
             .data
             .lock()
             .unwrap()
             .iter()
-            .find(|user| user.uuid == uuid)
+            .find(|user| user.id == uuid)
             .cloned())
     }
 
@@ -58,18 +58,18 @@ impl DatabaseUserRepository for MockUserRepository {
             .cloned())
     }
 
-    async fn create(&self, email: String, password_hash: String) -> DatabaseResult<()> {
+    async fn create(&self, email: String, password_hash: String) -> DatabaseResult<User> {
         let mut user = User::mock();
         user.email = email;
         user.password_hash = password_hash;
         let mut data = self.data.lock().unwrap();
-        data.push(user);
-        Ok(())
+        data.push(user.clone());
+        Ok(user)
     }
 
-    async fn delete(&self, uuid: Uuid) -> DatabaseResult<()> {
+    async fn delete(&self, uuid: Uuid) -> DatabaseResult<User> {
         let mut data = self.data.lock().unwrap();
-        data.retain(|user| user.uuid != uuid);
-        Ok(())
+        data.retain(|user| user.id != uuid);
+        Ok(User::mock())
     }
 }

@@ -15,10 +15,10 @@ pub fn router() -> Router<AppState> {
 pub async fn login(
     State(state): State<AppState>,
     TypedHeader(authorization): TypedHeader<Authorization<Basic>>,
-) -> AppResult {
+) -> AppResult<impl IntoResponse> {
     let user = state
         .database_service
-        .find_user_password_hash_by_email(authorization.username())
+        .find_user_by_email(authorization.username())
         .await?
         .ok_or(ClientError::NotFound)?;
     state
@@ -26,7 +26,7 @@ pub async fn login(
         .verify_password(authorization.password(), &user.password_hash)?;
     let access_token = state
         .token_service
-        .generate_access_token(user.uuid, &state.config)?;
+        .generate_access_token(user.id, &state.config)?;
     Ok(Json(TokenResponse {
         access_token,
         token_type: String::from("Bearer"),

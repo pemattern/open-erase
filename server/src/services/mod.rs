@@ -7,8 +7,8 @@ use uuid::Uuid;
 
 use crate::{
     error::ServerError,
+    models::User,
     repositories::{DatabaseRepository, user::DatabaseUserRepository},
-    schemas::user::{UserPasswordHash, UserResponse},
 };
 
 pub type ServerResult<T> = Result<T, ServerError>;
@@ -30,31 +30,19 @@ impl DatabaseService {
 }
 
 impl DatabaseService {
-    pub async fn find_user_by_uuid(&self, uuid: Uuid) -> ServerResult<Option<UserResponse>> {
-        let user = self.user().find_by_uuid(uuid).await?;
-        Ok(user.map(UserResponse::from))
+    pub async fn find_user_by_id(&self, id: Uuid) -> ServerResult<Option<User>> {
+        Ok(self.user().find_by_id(id).await?)
     }
 
-    pub async fn find_user_by_email(&self, email: &str) -> ServerResult<Option<UserResponse>> {
-        let user = self.user().find_by_email(email).await?;
-        Ok(user.map(UserResponse::from))
+    pub async fn find_user_by_email(&self, email: &str) -> ServerResult<Option<User>> {
+        Ok(self.user().find_by_email(email).await?)
     }
 
-    pub async fn find_user_password_hash_by_email(
-        &self,
-        email: &str,
-    ) -> ServerResult<Option<UserPasswordHash>> {
-        let user = self.user().find_by_email(email).await?;
-        Ok(user.map(UserPasswordHash::from))
+    pub async fn create_user(&self, email: String, password_hash: String) -> ServerResult<User> {
+        Ok(self.user().create(email, password_hash).await?)
     }
 
-    pub async fn create_user(&self, email: String, password_hash: String) -> ServerResult<()> {
-        self.user().create(email, password_hash).await?;
-        Ok(())
-    }
-
-    pub async fn delete_user(&self, uuid: Uuid) -> ServerResult<()> {
-        self.user().delete(uuid).await?;
-        Ok(())
+    pub async fn delete_user(&self, uuid: Uuid) -> ServerResult<User> {
+        Ok(self.user().delete(uuid).await?)
     }
 }
