@@ -16,7 +16,7 @@ COPY server/migrations ./migrations
 RUN touch src/main.rs && cargo build --release
 
 FROM debian:trixie-slim AS runtime
-COPY --from=server-builder /server/target/release/open-erase-server /open-erase-server
+COPY --from=server-builder /server/target/release/server /server
 COPY --from=web-builder /web/dist /dist
-ENTRYPOINT [ "/open-erase-server" ]
+ENTRYPOINT [ "/server" ]
 EXPOSE 3000

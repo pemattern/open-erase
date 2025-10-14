@@ -4,7 +4,7 @@ use serde::Deserialize;
 
 const CONFIG_FILE_PATH: &str = "Server.toml";
 const DEFAULT_ISSUER: &str = "open-erase";
-const DEFAULT_ACCESS_TOKEN_VALIDITY_SECS: u64 = 60 * 15; // 15min
+const DEFAULT_ACCESS_TOKEN_VALIDITY_SECS: u64 = 60 * 15;
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(default)]
