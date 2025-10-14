@@ -9,7 +9,7 @@ use uuid::Uuid;
 
 use crate::models::User;
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct GetUserResponse {
     pub id: Uuid,
     pub email: String,
@@ -40,7 +40,7 @@ pub struct PostUserRequest {
     pub password: String,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct PostUserResponse {
     pub id: Uuid,
     pub email: String,
@@ -70,7 +70,37 @@ impl From<User> for PostUserResponse {
     }
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
+pub struct PatchUserRequest {
+    pub email: Option<String>,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct PatchUserResponse {
+    pub id: Uuid,
+    pub email: String,
+    pub created_at: DateTime<Local>,
+    pub updated_at: DateTime<Local>,
+}
+
+impl IntoResponse for PatchUserResponse {
+    fn into_response(self) -> Response {
+        (StatusCode::OK, Json(self)).into_response()
+    }
+}
+
+impl From<User> for PatchUserResponse {
+    fn from(value: User) -> Self {
+        Self {
+            id: value.id,
+            email: value.email,
+            created_at: value.created_at,
+            updated_at: value.updated_at,
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize)]
 pub struct DeleteUserResponse {
     pub id: Uuid,
 }

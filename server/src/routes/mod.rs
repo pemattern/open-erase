@@ -2,15 +2,19 @@ use std::time::Duration;
 
 use axum::{Router, middleware};
 use tower::ServiceBuilder;
-use tower_http::compression::CompressionLayer;
-use tower_http::services::{ServeDir, ServeFile};
-use tower_http::timeout::TimeoutLayer;
-use tower_http::trace::TraceLayer;
+use tower_http::{
+    compression::CompressionLayer,
+    services::{ServeDir, ServeFile},
+    timeout::TimeoutLayer,
+    trace::TraceLayer,
+};
 use tracing::Level;
 
 use crate::error::{AppResult, ClientError};
-use crate::middleware::auth::{validate_basic_auth, validate_jwt};
-use crate::middleware::log::log;
+use crate::middleware::{
+    auth::{validate_basic_auth, validate_jwt},
+    log::log,
+};
 use crate::state::AppState;
 
 mod auth;

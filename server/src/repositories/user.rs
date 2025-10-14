@@ -8,7 +8,8 @@ pub trait DatabaseUserRepository: Send + Sync {
     async fn find_by_id(&self, id: Uuid) -> DatabaseResult<Option<User>>;
     async fn find_by_email(&self, email: &str) -> DatabaseResult<Option<User>>;
     async fn create(&self, email: String, password_hash: String) -> DatabaseResult<User>;
-    async fn delete(&self, uuid: Uuid) -> DatabaseResult<User>;
+    async fn update(&self, id: Uuid, email: Option<String>) -> DatabaseResult<User>;
+    async fn delete(&self, id: Uuid) -> DatabaseResult<User>;
 }
 
 #[derive(Clone)]
@@ -48,6 +49,15 @@ impl DatabaseUserRepository for PostgresUserRepository {
         .bind(&password_hash)
         .fetch_one(&self.pool)
         .await?;
+        Ok(user)
+    }
+
+    async fn update(&self, id: Uuid, email: Option<String>) -> DatabaseResult<User> {
+        let user = sqlx::query_as::<_, User>("UPDATE users SET email = $1 WHERE id = $2")
+            .bind(id)
+            .bind(&email)
+            .fetch_one(&self.pool)
+            .await?;
         Ok(user)
     }
 

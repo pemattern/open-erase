@@ -37,6 +37,10 @@ impl DatabaseService {
         Ok(self.user().create(email, password_hash).await?)
     }
 
+    pub async fn update_user(&self, id: Uuid, email: Option<String>) -> ServiceResult<User> {
+        Ok(self.user().update(id, email).await?)
+    }
+
     pub async fn delete_user(&self, uuid: Uuid) -> ServiceResult<User> {
         Ok(self.user().delete(uuid).await?)
     }

@@ -4,7 +4,11 @@ use async_trait::async_trait;
 use chrono::DateTime;
 use uuid::Uuid;
 
-use crate::{error::DatabaseResult, models::User, repositories::user::DatabaseUserRepository};
+use crate::{
+    error::{DatabaseError, DatabaseResult},
+    models::User,
+    repositories::user::DatabaseUserRepository,
+};
 
 impl User {
     pub fn mock() -> Self {
@@ -64,13 +68,32 @@ impl DatabaseUserRepository for MockUserRepository {
         Ok(user)
     }
 
-    async fn delete(&self, uuid: Uuid) -> DatabaseResult<User> {
+    async fn update(&self, id: Uuid, email: Option<String>) -> DatabaseResult<User> {
+        if let Some(email) = email {
+            self.data
+                .lock()
+                .unwrap()
+                .iter_mut()
+                .filter(|user| user.id == id)
+                .map(|user| user.email = email.clone());
+        };
+        let user = self
+            .data
+            .lock()
+            .unwrap()
+            .iter()
+            .find(|user| user.id == id)
+            .cloned();
+        user.ok_or(DatabaseError::Test)
+    }
+
+    async fn delete(&self, id: Uuid) -> DatabaseResult<User> {
         let mut data = self.data.lock().unwrap();
         let user = data
-            .extract_if(.., |user| user.id == uuid)
+            .extract_if(.., |user| user.id == id)
             .collect::<Vec<User>>()
             .first()
             .cloned();
-        user.ok_or(crate::error::DatabaseError::Test)
+        user.ok_or(DatabaseError::Test)
     }
 }

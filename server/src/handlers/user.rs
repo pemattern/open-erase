@@ -6,7 +6,10 @@ use uuid::Uuid;
 
 use crate::{
     error::{AppResult, ClientError},
-    schemas::user::{DeleteUserResponse, GetUserResponse, PostUserRequest, PostUserResponse},
+    schemas::user::{
+        DeleteUserResponse, GetUserResponse, PatchUserRequest, PatchUserResponse, PostUserRequest,
+        PostUserResponse,
+    },
     state::AppState,
 };
 
@@ -33,6 +36,16 @@ pub async fn post_user(
         .database_service
         .create_user(user.email, password_hash)
         .await?;
+    Ok(user.into())
+}
+
+#[axum::debug_handler]
+pub async fn patch_user(
+    State(state): State<AppState>,
+    Path(uuid): Path<Uuid>,
+    Json(user): Json<PatchUserRequest>,
+) -> AppResult<PatchUserResponse> {
+    let user = state.database_service.update_user(uuid, user.email).await?;
     Ok(user.into())
 }
 
