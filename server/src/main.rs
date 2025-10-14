@@ -1,5 +1,6 @@
 mod config;
 mod error;
+mod handlers;
 mod middleware;
 mod models;
 mod repositories;
@@ -8,14 +9,7 @@ mod schemas;
 mod services;
 mod state;
 
-use crate::{
-    error::{AppError, DatabaseError, ServiceError},
-    state::AppState,
-};
-
-pub type AppResult<T> = Result<T, AppError>;
-pub type ServiceResult<T> = Result<T, ServiceError>;
-pub type DatabaseResult<T> = Result<T, DatabaseError>;
+use crate::state::AppState;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -86,7 +80,7 @@ mod test {
         let state = AppState::mock();
         let app = routes::app(state.clone());
         let token = TokenService
-            .generate_access_token(Uuid::default(), &state.config)
+            .generate(Uuid::default(), &state.config)
             .unwrap();
         let uri = format!("/api/user/{}", Uuid::default());
         let auth_header = format!("Bearer {}", token);
@@ -108,7 +102,7 @@ mod test {
         let state = AppState::mock();
         let app = routes::app(state.clone());
         let token = TokenService
-            .generate_access_token(Uuid::default(), &state.config)
+            .generate(Uuid::default(), &state.config)
             .unwrap();
         let auth_header = format!("Bearer {}", token);
         let body = PostUserRequest {
@@ -135,7 +129,7 @@ mod test {
         let state = AppState::mock();
         let app = routes::app(state.clone());
         let token = TokenService
-            .generate_access_token(Uuid::default(), &state.config)
+            .generate(Uuid::default(), &state.config)
             .unwrap();
         let auth_header = format!("Bearer {}", token);
         let uri = format!("/api/user/{}", User::mock().id);

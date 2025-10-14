@@ -5,6 +5,10 @@ use axum::{
     response::{IntoResponse, Response},
 };
 
+pub type AppResult<T> = Result<T, AppError>;
+pub type ServiceResult<T> = Result<T, ServiceError>;
+pub type DatabaseResult<T> = Result<T, DatabaseError>;
+
 pub enum AppError {
     Client(ClientError),
     Service(ServiceError),
@@ -88,6 +92,7 @@ impl From<uuid::Error> for ServiceError {
     }
 }
 
+#[allow(dead_code)]
 #[derive(Debug)]
 pub enum DatabaseError {
     Sqlx(sqlx::Error),

@@ -1,4 +1,4 @@
-use crate::{DatabaseResult, models::User};
+use crate::{error::DatabaseResult, models::User};
 use async_trait::async_trait;
 use sqlx::PgPool;
 use uuid::Uuid;

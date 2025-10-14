@@ -8,8 +8,8 @@ use tower_http::timeout::TimeoutLayer;
 use tower_http::trace::TraceLayer;
 use tracing::Level;
 
-use crate::AppResult;
-use crate::error::ClientError;
+use crate::error::{AppResult, ClientError};
+use crate::middleware::auth::{validate_basic_auth, validate_jwt};
 use crate::middleware::log::log;
 use crate::state::AppState;
 
@@ -51,10 +51,22 @@ pub fn api_router(state: AppState) -> Router<AppState> {
     Router::new().nest(
         API_PATH,
         Router::new()
-            .nest(AUTH_PATH, auth::router())
-            .nest(USER_PATH, user::router(state.clone()))
+            .merge(basic_auth_router(state.clone()))
+            .merge(jwt_auth_router(state.clone()))
             .merge(docs::router()),
     )
+}
+
+pub fn basic_auth_router(state: AppState) -> Router<AppState> {
+    Router::new()
+        .nest(AUTH_PATH, auth::router())
+        .layer(middleware::from_fn_with_state(state, validate_basic_auth))
+}
+
+pub fn jwt_auth_router(state: AppState) -> Router<AppState> {
+    Router::new()
+        .nest(USER_PATH, user::router())
+        .layer(middleware::from_fn_with_state(state, validate_jwt))
 }
 
 pub fn web_service() -> ServeDir<ServeFile> {

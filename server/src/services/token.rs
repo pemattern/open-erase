@@ -5,9 +5,9 @@ use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation, decode, encode}
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::{ServiceResult, config::Config};
+use crate::{config::Config, error::ServiceResult};
 
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Claims {
     pub sub: String,
     pub iss: String,
@@ -19,7 +19,7 @@ pub struct Claims {
 pub struct TokenService;
 
 impl TokenService {
-    pub fn generate_access_token(&self, user_uuid: Uuid, config: &Config) -> ServiceResult<String> {
+    pub fn generate(&self, user_uuid: Uuid, config: &Config) -> ServiceResult<String> {
         let sub = user_uuid.to_string();
         let now = Utc::now();
         let iat = now.timestamp() as usize;
@@ -33,18 +33,12 @@ impl TokenService {
         Ok(access_token)
     }
 
-    pub fn validate_access_token(
-        &self,
-        authorization_header: &str,
-        config: &Config,
-    ) -> ServiceResult<Uuid> {
+    pub fn decode(&self, jwt: &str, config: &Config) -> ServiceResult<Claims> {
         let key = DecodingKey::from_secret(config.secret.as_bytes());
         let mut validation = Validation::new(jsonwebtoken::Algorithm::HS256);
         validation.set_issuer(&[&config.issuer]);
-        let jwt = authorization_header.trim_start_matches("Bearer ");
         let claims =
             decode::<Claims>(jwt, &key, &Validation::new(jsonwebtoken::Algorithm::HS256))?.claims;
-        let uuid = Uuid::parse_str(&claims.sub)?;
-        Ok(uuid)
+        Ok(claims)
     }
 }

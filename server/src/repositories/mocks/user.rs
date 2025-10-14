@@ -4,7 +4,7 @@ use async_trait::async_trait;
 use chrono::DateTime;
 use uuid::Uuid;
 
-use crate::{DatabaseResult, models::User, repositories::user::DatabaseUserRepository};
+use crate::{error::DatabaseResult, models::User, repositories::user::DatabaseUserRepository};
 
 impl User {
     pub fn mock() -> Self {

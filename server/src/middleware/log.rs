@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use axum::{extract::Request, middleware::Next, response::IntoResponse};
 
-use crate::{AppResult, error::ServiceError};
+use crate::error::{AppResult, ServiceError};
 
 #[axum::debug_middleware]
 pub async fn log(request: Request, next: Next) -> AppResult<impl IntoResponse> {

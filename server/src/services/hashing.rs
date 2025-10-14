@@ -3,7 +3,7 @@ use argon2::{
     password_hash::{SaltString, rand_core::OsRng},
 };
 
-use crate::{ServiceResult, services::ServiceError};
+use crate::error::{ServiceError, ServiceResult};
 
 #[derive(Clone)]
 pub struct HashingService;

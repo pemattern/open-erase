@@ -5,7 +5,7 @@ use sqlx::postgres::PgPoolOptions;
 use crate::{
     config::Config,
     repositories::{DatabaseRepository, PostgresRepository},
-    services::{DatabaseService, hashing::HashingService, token::TokenService},
+    services::{database::DatabaseService, hashing::HashingService, token::TokenService},
 };
 
 #[derive(Clone)]
