@@ -4,7 +4,7 @@ use sqlx::PgPool;
 use uuid::Uuid;
 
 #[async_trait]
-pub trait DatabaseUserRepository: Send + Sync {
+pub trait UserRepository: Send + Sync {
     async fn find_by_id(&self, id: Uuid) -> DatabaseResult<Option<User>>;
     async fn find_by_email(&self, email: &str) -> DatabaseResult<Option<User>>;
     async fn create(&self, email: String, password_hash: String) -> DatabaseResult<User>;
@@ -24,7 +24,7 @@ impl PostgresUserRepository {
 }
 
 #[async_trait]
-impl DatabaseUserRepository for PostgresUserRepository {
+impl UserRepository for PostgresUserRepository {
     async fn find_by_id(&self, id: Uuid) -> DatabaseResult<Option<User>> {
         let user = sqlx::query_as::<_, User>("SELECT * FROM users WHERE id = $1;")
             .bind(id)

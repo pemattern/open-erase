@@ -23,7 +23,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 #[cfg(test)]
 mod test {
-    use crate::{models::User, schemas::user::PostUserRequest, services::token::TokenService};
+    use crate::{models::User, schemas::user::PostUserRequest};
 
     use super::*;
 
@@ -79,8 +79,9 @@ mod test {
     async fn get_user_by_uuid() {
         let state = AppState::mock();
         let app = routes::app(state.clone());
-        let token = TokenService
-            .generate(Uuid::default(), &state.config)
+        let token = state
+            .auth_service
+            .generate_access_token(User::mock(), &state.config)
             .unwrap();
         let uri = format!("/api/user/{}", Uuid::default());
         let auth_header = format!("Bearer {}", token);
@@ -101,8 +102,9 @@ mod test {
     async fn create_user() {
         let state = AppState::mock();
         let app = routes::app(state.clone());
-        let token = TokenService
-            .generate(Uuid::default(), &state.config)
+        let token = state
+            .auth_service
+            .generate_access_token(User::mock(), &state.config)
             .unwrap();
         let auth_header = format!("Bearer {}", token);
         let body = PostUserRequest {
@@ -128,8 +130,9 @@ mod test {
     async fn delete_user() {
         let state = AppState::mock();
         let app = routes::app(state.clone());
-        let token = TokenService
-            .generate(Uuid::default(), &state.config)
+        let token = state
+            .auth_service
+            .generate_access_token(User::mock(), &state.config)
             .unwrap();
         let auth_header = format!("Bearer {}", token);
         let uri = format!("/api/user/{}", User::mock().id);

@@ -19,7 +19,7 @@ pub async fn get_user(
     Path(uuid): Path<Uuid>,
 ) -> AppResult<GetUserResponse> {
     let user = state
-        .database_service
+        .user_service
         .find_user_by_id(uuid)
         .await?
         .ok_or(ClientError::NotFound)?;
@@ -31,9 +31,9 @@ pub async fn post_user(
     State(state): State<AppState>,
     Json(user): Json<PostUserRequest>,
 ) -> AppResult<PostUserResponse> {
-    let password_hash = state.hashing_service.hash_password(&user.password)?;
+    let password_hash = state.auth_service.hash_password(&user.password)?;
     let user = state
-        .database_service
+        .user_service
         .create_user(user.email, password_hash)
         .await?;
     Ok(user.into())
@@ -45,7 +45,7 @@ pub async fn patch_user(
     Path(uuid): Path<Uuid>,
     Json(user): Json<PatchUserRequest>,
 ) -> AppResult<PatchUserResponse> {
-    let user = state.database_service.update_user(uuid, user.email).await?;
+    let user = state.user_service.update_user(uuid, user.email).await?;
     Ok(user.into())
 }
 
@@ -54,6 +54,6 @@ pub async fn delete_user(
     State(state): State<AppState>,
     Path(uuid): Path<Uuid>,
 ) -> AppResult<DeleteUserResponse> {
-    let user = state.database_service.delete_user(uuid).await?;
+    let user = state.user_service.delete_user(uuid).await?;
     Ok(user.into())
 }

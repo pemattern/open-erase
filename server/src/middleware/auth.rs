@@ -25,10 +25,10 @@ pub async fn validate_jwt(
     next: Next,
 ) -> AppResult<impl IntoResponse> {
     let authorization_header = header_result.map_err(|_| ClientError::Unauthorized)?;
-    let jwt = authorization_header.token();
+    let access_token = authorization_header.token();
     let claims = state
-        .token_service
-        .decode(jwt, &state.config)
+        .auth_service
+        .validate_access_token(access_token, &state.config)
         .map_err(|_| ClientError::Unauthorized)?;
     request.extensions_mut().insert(claims);
     Ok(next.run(request).await)
@@ -43,12 +43,12 @@ pub async fn validate_basic_auth(
 ) -> AppResult<impl IntoResponse> {
     let authorization_header = header_result.map_err(|_| ClientError::Unauthorized)?;
     let user = state
-        .database_service
+        .user_service
         .find_user_by_email(authorization_header.username())
         .await?
         .ok_or(ClientError::Unauthorized)?;
     state
-        .hashing_service
+        .auth_service
         .verify_password(authorization_header.password(), &user.password_hash)
         .map_err(|_| ClientError::Unauthorized)?;
     request.extensions_mut().insert(user);

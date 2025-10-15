@@ -7,7 +7,7 @@ use uuid::Uuid;
 use crate::{
     error::{DatabaseError, DatabaseResult},
     models::User,
-    repositories::user::DatabaseUserRepository,
+    repositories::user::UserRepository,
 };
 
 impl User {
@@ -38,7 +38,7 @@ impl MockUserRepository {
 }
 
 #[async_trait]
-impl DatabaseUserRepository for MockUserRepository {
+impl UserRepository for MockUserRepository {
     async fn find_by_id(&self, uuid: Uuid) -> DatabaseResult<Option<User>> {
         Ok(self
             .data
@@ -75,7 +75,7 @@ impl DatabaseUserRepository for MockUserRepository {
                 .unwrap()
                 .iter_mut()
                 .filter(|user| user.id == id)
-                .map(|user| user.email = email.clone());
+                .for_each(|user| user.email = email.clone());
         };
         let user = self
             .data

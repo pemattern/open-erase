@@ -1,3 +1,2 @@
-pub mod database;
-pub mod hashing;
-pub mod token;
+pub mod auth;
+pub mod user;
