@@ -9,6 +9,8 @@ services:
       dockerfile: Dockerfile
     ports:
       - "3000:3000"
+    volumes:
+      - iso:/dist/iso
     restart: always
     depends_on:
       - open-erase-db
@@ -40,11 +42,12 @@ services:
     build:
       context: .
       dockerfile: iso-builder.Dockerfile
-    ports:
-      - "3001:3001"
+    volumes:
+      - iso:/iso/out
     command: >
-      sh -c "mkarchiso -v -w /tmp/archiso-tmp -o /iso/out /iso"
+      sh -c "ls -a && mkarchiso -v -w /tmp/archiso-tmp -o /iso/out /iso"
 
 volumes:
   db:
     driver: local
+  iso:

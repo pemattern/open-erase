@@ -1,4 +1,5 @@
 FROM archlinux:base AS iso-builder
 WORKDIR /iso
-COPY client/x86_64/iso/ ./
-RUN pacman -Syu --noconfirm archiso grub
+RUN pacman -Syu --noconfirm archiso grub && \
+  cp -r /usr/share/archiso/configs/baseline/* .
+COPY client/x86_64/iso/ .
