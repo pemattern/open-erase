@@ -1,5 +1,6 @@
 use std::fs;
 
+use base64::{Engine, prelude::BASE64_URL_SAFE_NO_PAD};
 use serde::Deserialize;
 
 const CONFIG_FILE_PATH: &str = "Server.toml";
@@ -47,5 +48,5 @@ fn deserialize_config() -> Config {
 fn generate_byte_key(length: usize) -> String {
     let mut key = vec![0u8; length];
     getrandom::fill(&mut key).expect("unable to generate random encryption key");
-    hex::encode(&key)
+    BASE64_URL_SAFE_NO_PAD.encode(key)
 }
