@@ -7,7 +7,6 @@ mod routes;
 mod schemas;
 mod services;
 mod state;
-mod util;
 
 use crate::state::AppState;
 

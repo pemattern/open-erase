@@ -3,17 +3,66 @@ use axum::{
     http::{StatusCode, header},
     response::{IntoResponse, Response},
 };
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 #[derive(Serialize)]
 pub struct LoginResponse {
     pub access_token: String,
     pub refresh_token: String,
     pub token_type: String,
-    pub expires_in: u64,
+}
+
+impl LoginResponse {
+    pub fn new(access_token: String, refresh_token: String) -> Self {
+        let token_type = String::from("Bearer");
+        Self {
+            access_token,
+            refresh_token,
+            token_type,
+        }
+    }
 }
 
 impl IntoResponse for LoginResponse {
+    fn into_response(self) -> Response {
+        (
+            StatusCode::OK,
+            [
+                (header::CACHE_CONTROL, "no-store"),
+                (header::PRAGMA, "no-cache"),
+                (
+                    header::SET_COOKIE,
+                    &refresh_token_cookie(&self.refresh_token),
+                ),
+            ],
+            Json(self),
+        )
+            .into_response()
+    }
+}
+
+#[derive(Deserialize)]
+pub struct RefreshRequest {
+    pub access_token: String,
+}
+
+#[derive(Serialize)]
+pub struct RefreshResponse {
+    pub access_token: String,
+    pub token_type: String,
+}
+
+impl RefreshResponse {
+    pub fn new(access_token: String) -> Self {
+        let token_type = String::from("Bearer");
+        Self {
+            access_token,
+            token_type,
+        }
+    }
+}
+
+impl IntoResponse for RefreshResponse {
     fn into_response(self) -> Response {
         (
             StatusCode::OK,
@@ -27,9 +76,9 @@ impl IntoResponse for LoginResponse {
     }
 }
 
-#[derive(Serialize)]
-pub struct RefreshResponse {
-    pub access_token: String,
-    pub token_type: String,
-    pub expires_in: String,
+fn refresh_token_cookie(refresh_token: &str) -> String {
+    format!(
+        "refresh_token={}; HttpOnly; Secure; SameSite=Strict",
+        refresh_token
+    )
 }

@@ -1,7 +1,7 @@
 use std::sync::{Arc, Mutex};
 
 use async_trait::async_trait;
-use chrono::DateTime;
+use chrono::{DateTime, Local};
 use uuid::Uuid;
 
 use crate::{
@@ -16,7 +16,7 @@ impl RefreshToken {
             id: Uuid::default(),
             user_id: Uuid::default(),
             // password123
-            token_hash: String::from(
+            refresh_token_hash: String::from(
                 "$argon2id$v=19$m=16,t=2,p=1$NjFWcEMwUEQ0dmZXcDMwSg$TfJtuSrudRp6hhV2mFSt3g",
             ),
             created_at: DateTime::default(),
@@ -51,10 +51,14 @@ impl RefreshTokenRepository for MockRefreshTokenRepository {
             .collect::<Vec<RefreshToken>>())
     }
 
-    async fn create(&self, user_id: Uuid, token_hash: String) -> RepositoryResult<RefreshToken> {
+    async fn create(
+        &self,
+        user_id: Uuid,
+        refresh_token_hash: String,
+    ) -> RepositoryResult<RefreshToken> {
         let mut refresh_token = RefreshToken::mock();
         refresh_token.user_id = user_id;
-        refresh_token.token_hash = token_hash;
+        refresh_token.refresh_token_hash = refresh_token_hash;
         let mut data = self.data.lock().unwrap();
         data.push(refresh_token.clone());
         Ok(refresh_token)

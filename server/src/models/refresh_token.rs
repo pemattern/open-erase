@@ -6,7 +6,7 @@ use uuid::Uuid;
 pub struct RefreshToken {
     pub id: Uuid,
     pub user_id: Uuid,
-    pub token_hash: String,
+    pub refresh_token_hash: String,
     pub created_at: DateTime<Local>,
     pub updated_at: DateTime<Local>,
 }

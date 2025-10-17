@@ -3,7 +3,7 @@ use argon2::{
     password_hash::{SaltString, rand_core::OsRng},
 };
 use base64::{Engine, prelude::BASE64_URL_SAFE_NO_PAD};
-use chrono::Utc;
+use chrono::Local;
 use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation, decode, encode};
 use serde::{Deserialize, Serialize};
 use std::{
@@ -18,14 +18,12 @@ use crate::{
     repositories::{refresh_token::RefreshTokenRepository, user::UserRepository},
 };
 
-const CONFIG_FILE_PATH: &str = "Server.toml";
 const ISSUER: &str = "open-erase";
-const ACCESS_TOKEN_VALIDITY_SECS: Duration = Duration::from_secs(60 * 15);
+const ACCESS_TOKEN_VALIDITY_DURATION: Duration = Duration::from_secs(60 * 15); // 15 minutes
 const KEY_LENGTH: usize = 32;
 
-static ARGON2: LazyLock<Argon2<'static>> = LazyLock::new(|| Argon2::default());
-static ENCRYPTION_KEY: LazyLock<[u8; KEY_LENGTH]> =
-    LazyLock::new(|| generate_byte_key::<KEY_LENGTH>());
+static ARGON2: LazyLock<Argon2<'static>> = LazyLock::new(Argon2::default);
+static ENCRYPTION_KEY: LazyLock<[u8; KEY_LENGTH]> = LazyLock::new(generate_byte_key::<KEY_LENGTH>);
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Claims {
@@ -37,8 +35,8 @@ pub struct Claims {
 
 impl Claims {
     pub fn new(user_id: Uuid) -> Self {
-        let now = Utc::now();
-        let access_token_expires_at = now + ACCESS_TOKEN_VALIDITY_SECS;
+        let now = Local::now();
+        let access_token_expires_at = now + ACCESS_TOKEN_VALIDITY_DURATION;
         let sub = user_id.to_string();
         let exp = access_token_expires_at.timestamp() as usize;
         let iat = now.timestamp() as usize;
