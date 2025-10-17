@@ -31,10 +31,10 @@ pub async fn post_user(
     State(state): State<AppState>,
     Json(user): Json<PostUserRequest>,
 ) -> AppResult<PostUserResponse> {
-    let password_hash = state.auth_service.hash_password(&user.password)?;
+    // TODO hash password
     let user = state
         .user_service
-        .create_user(user.email, password_hash)
+        .create_user(user.email, user.password)
         .await?;
     Ok(user.into())
 }

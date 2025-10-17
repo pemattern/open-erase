@@ -3,29 +3,27 @@ use std::{env, sync::Arc};
 use sqlx::postgres::PgPoolOptions;
 
 use crate::{
-    config::Config,
-    repositories::user::PostgresUserRepository,
+    repositories::{refresh_token::PostgresRefreshTokenRepository, user::PostgresUserRepository},
     services::{auth::AuthService, user::UserService},
 };
 
 #[derive(Clone)]
 pub struct AppState {
-    pub config: Config,
     pub auth_service: AuthService,
     pub user_service: UserService,
 }
 
 impl AppState {
     pub async fn postgres() -> Result<Self, Box<dyn std::error::Error>> {
-        let config = Config::load();
         let db_url = db_url_from_envs();
         let pool = PgPoolOptions::new().connect(&db_url).await?;
         sqlx::migrate!("./migrations").run(&pool).await?;
         let user_repository = Arc::new(PostgresUserRepository::new(pool.clone()));
-        let auth_service = AuthService::new(user_repository.clone());
+        let refresh_token_repository = Arc::new(PostgresRefreshTokenRepository::new(pool.clone()));
+        let auth_service =
+            AuthService::new(user_repository.clone(), refresh_token_repository.clone());
         let user_service = UserService::new(user_repository.clone());
         Ok(Self {
-            config,
             auth_service,
             user_service,
         })
@@ -44,12 +42,13 @@ fn db_url_from_envs() -> String {
 #[cfg(test)]
 impl AppState {
     pub fn mock() -> Self {
-        let config = Config::default();
         let user_repository = Arc::new(crate::repositories::mocks::MockUserRepository::new());
-        let auth_service = AuthService::new(user_repository.clone());
+        let refresh_token_repository =
+            Arc::new(crate::repositories::mocks::MockRefreshTokenRepository::new());
+        let auth_service =
+            AuthService::new(user_repository.clone(), refresh_token_repository.clone());
         let user_service = UserService::new(user_repository.clone());
         Self {
-            config,
             auth_service,
             user_service,
         }

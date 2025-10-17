@@ -1,4 +1,3 @@
-mod config;
 mod error;
 mod handlers;
 mod middleware;
@@ -8,6 +7,7 @@ mod routes;
 mod schemas;
 mod services;
 mod state;
+mod util;
 
 use crate::state::AppState;
 
@@ -81,7 +81,7 @@ mod test {
         let app = routes::app(state.clone());
         let token = state
             .auth_service
-            .generate_access_token(User::mock(), &state.config)
+            .generate_access_token(&User::mock())
             .unwrap();
         let uri = format!("/api/user/{}", Uuid::default());
         let auth_header = format!("Bearer {}", token);
@@ -104,7 +104,7 @@ mod test {
         let app = routes::app(state.clone());
         let token = state
             .auth_service
-            .generate_access_token(User::mock(), &state.config)
+            .generate_access_token(&User::mock())
             .unwrap();
         let auth_header = format!("Bearer {}", token);
         let body = PostUserRequest {
@@ -132,7 +132,7 @@ mod test {
         let app = routes::app(state.clone());
         let token = state
             .auth_service
-            .generate_access_token(User::mock(), &state.config)
+            .generate_access_token(&User::mock())
             .unwrap();
         let auth_header = format!("Bearer {}", token);
         let uri = format!("/api/user/{}", User::mock().id);

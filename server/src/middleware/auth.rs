@@ -28,7 +28,7 @@ pub async fn validate_jwt(
     let access_token = authorization_header.token();
     let claims = state
         .auth_service
-        .validate_access_token(access_token, &state.config)
+        .validate_access_token(access_token)
         .map_err(|_| ClientError::Unauthorized)?;
     request.extensions_mut().insert(claims);
     Ok(next.run(request).await)

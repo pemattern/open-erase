@@ -6,13 +6,14 @@ use axum::{
 use serde::Serialize;
 
 #[derive(Serialize)]
-pub struct TokenResponse {
+pub struct LoginResponse {
     pub access_token: String,
+    pub refresh_token: String,
     pub token_type: String,
     pub expires_in: u64,
 }
 
-impl IntoResponse for TokenResponse {
+impl IntoResponse for LoginResponse {
     fn into_response(self) -> Response {
         (
             StatusCode::OK,
@@ -24,4 +25,11 @@ impl IntoResponse for TokenResponse {
         )
             .into_response()
     }
+}
+
+#[derive(Serialize)]
+pub struct RefreshResponse {
+    pub access_token: String,
+    pub token_type: String,
+    pub expires_in: String,
 }

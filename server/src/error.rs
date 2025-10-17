@@ -7,7 +7,7 @@ use axum::{
 
 pub type AppResult<T> = Result<T, AppError>;
 pub type ServiceResult<T> = Result<T, ServiceError>;
-pub type DatabaseResult<T> = Result<T, DatabaseError>;
+pub type RepositoryResult<T> = Result<T, RepositoryError>;
 
 pub enum AppError {
     Client(ClientError),
@@ -54,7 +54,7 @@ impl IntoResponse for ClientError {
 
 #[derive(Debug)]
 pub enum ServiceError {
-    Database(DatabaseError),
+    Repository(RepositoryError),
     Hash(argon2::password_hash::Error),
     Token(jsonwebtoken::errors::Error),
     Uuid(uuid::Error),
@@ -68,9 +68,9 @@ impl IntoResponse for ServiceError {
     }
 }
 
-impl From<DatabaseError> for ServiceError {
-    fn from(value: DatabaseError) -> Self {
-        Self::Database(value)
+impl From<RepositoryError> for ServiceError {
+    fn from(value: RepositoryError) -> Self {
+        Self::Repository(value)
     }
 }
 
@@ -94,12 +94,12 @@ impl From<uuid::Error> for ServiceError {
 
 #[allow(dead_code)]
 #[derive(Debug)]
-pub enum DatabaseError {
+pub enum RepositoryError {
     Sqlx(sqlx::Error),
     Test,
 }
 
-impl From<sqlx::Error> for DatabaseError {
+impl From<sqlx::Error> for RepositoryError {
     fn from(value: sqlx::Error) -> Self {
         Self::Sqlx(value)
     }
@@ -114,7 +114,7 @@ impl From<ServiceError> for ErrorResponse {
     fn from(error: ServiceError) -> Self {
         tracing::error!("{:?}", error);
         match error {
-            ServiceError::Database(_error) => ErrorResponse::internal_server_error(),
+            ServiceError::Repository(_error) => ErrorResponse::internal_server_error(),
             ServiceError::Hash(_error) => ErrorResponse::unauthorized(),
             ServiceError::Token(_error) => ErrorResponse::internal_server_error(),
             ServiceError::Uuid(_error) => ErrorResponse::internal_server_error(),

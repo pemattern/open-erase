@@ -5,14 +5,14 @@ use chrono::DateTime;
 use uuid::Uuid;
 
 use crate::{
-    error::{DatabaseError, DatabaseResult},
+    error::{RepositoryError, RepositoryResult},
     models::User,
     repositories::user::UserRepository,
 };
 
 impl User {
     pub fn mock() -> Self {
-        User {
+        Self {
             id: Uuid::default(),
             email: String::from("test@mail.com"),
             password_hash: String::from(
@@ -39,7 +39,7 @@ impl MockUserRepository {
 
 #[async_trait]
 impl UserRepository for MockUserRepository {
-    async fn find_by_id(&self, uuid: Uuid) -> DatabaseResult<Option<User>> {
+    async fn find_by_id(&self, uuid: Uuid) -> RepositoryResult<Option<User>> {
         Ok(self
             .data
             .lock()
@@ -49,7 +49,7 @@ impl UserRepository for MockUserRepository {
             .cloned())
     }
 
-    async fn find_by_email(&self, email: &str) -> DatabaseResult<Option<User>> {
+    async fn find_by_email(&self, email: &str) -> RepositoryResult<Option<User>> {
         Ok(self
             .data
             .lock()
@@ -59,7 +59,7 @@ impl UserRepository for MockUserRepository {
             .cloned())
     }
 
-    async fn create(&self, email: String, password_hash: String) -> DatabaseResult<User> {
+    async fn create(&self, email: String, password_hash: String) -> RepositoryResult<User> {
         let mut user = User::mock();
         user.email = email;
         user.password_hash = password_hash;
@@ -68,7 +68,7 @@ impl UserRepository for MockUserRepository {
         Ok(user)
     }
 
-    async fn update(&self, id: Uuid, email: Option<String>) -> DatabaseResult<User> {
+    async fn update(&self, id: Uuid, email: Option<String>) -> RepositoryResult<User> {
         if let Some(email) = email {
             self.data
                 .lock()
@@ -84,16 +84,16 @@ impl UserRepository for MockUserRepository {
             .iter()
             .find(|user| user.id == id)
             .cloned();
-        user.ok_or(DatabaseError::Test)
+        user.ok_or(RepositoryError::Test)
     }
 
-    async fn delete(&self, id: Uuid) -> DatabaseResult<User> {
+    async fn delete(&self, id: Uuid) -> RepositoryResult<User> {
         let mut data = self.data.lock().unwrap();
         let user = data
             .extract_if(.., |user| user.id == id)
             .collect::<Vec<User>>()
             .first()
             .cloned();
-        user.ok_or(DatabaseError::Test)
+        user.ok_or(RepositoryError::Test)
     }
 }
