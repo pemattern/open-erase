@@ -1,9 +1,11 @@
 use axum::{
-    Json,
     http::{StatusCode, header},
     response::{IntoResponse, Response},
 };
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
+
+use crate::schemas::json;
 
 #[derive(Serialize)]
 pub struct LoginResponse {
@@ -35,13 +37,13 @@ impl IntoResponse for LoginResponse {
                     &refresh_token_cookie(&self.refresh_token),
                 ),
             ],
-            Json(self),
+            json(self),
         )
             .into_response()
     }
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, ToSchema)]
 pub struct RefreshRequest {
     pub access_token: String,
 }
@@ -70,7 +72,7 @@ impl IntoResponse for RefreshResponse {
                 (header::CACHE_CONTROL, "no-store"),
                 (header::PRAGMA, "no-cache"),
             ],
-            Json(self),
+            json(self),
         )
             .into_response()
     }

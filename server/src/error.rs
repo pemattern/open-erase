@@ -58,6 +58,7 @@ pub enum ServiceError {
     Hash(argon2::password_hash::Error),
     Token(jsonwebtoken::errors::Error),
     Uuid(uuid::Error),
+    Serialization(serde_json::Error),
 }
 
 impl IntoResponse for ServiceError {
@@ -92,6 +93,12 @@ impl From<uuid::Error> for ServiceError {
     }
 }
 
+impl From<serde_json::Error> for ServiceError {
+    fn from(value: serde_json::Error) -> Self {
+        Self::Serialization(value)
+    }
+}
+
 #[allow(dead_code)]
 #[derive(Debug)]
 pub enum RepositoryError {
@@ -118,6 +125,7 @@ impl From<ServiceError> for ErrorResponse {
             ServiceError::Hash(_error) => ErrorResponse::unauthorized(),
             ServiceError::Token(_error) => ErrorResponse::internal_server_error(),
             ServiceError::Uuid(_error) => ErrorResponse::internal_server_error(),
+            ServiceError::Serialization(_error) => ErrorResponse::internal_server_error(),
         }
     }
 }

@@ -42,15 +42,15 @@ pub async fn validate_basic_auth(
     next: Next,
 ) -> AppResult<impl IntoResponse> {
     let authorization_header = header_result.map_err(|_| ClientError::Unauthorized)?;
+
     let user = state
-        .user_service
-        .find_user_by_email(authorization_header.username())
+        .auth_service
+        .validate_basic_auth(
+            authorization_header.username(),
+            authorization_header.password(),
+        )
         .await?
         .ok_or(ClientError::Unauthorized)?;
-    state
-        .auth_service
-        .verify_password(authorization_header.password(), &user.password_hash)
-        .map_err(|_| ClientError::Unauthorized)?;
     request.extensions_mut().insert(user);
     Ok(next.run(request).await)
 }

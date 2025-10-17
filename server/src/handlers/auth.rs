@@ -1,9 +1,9 @@
-use axum::{Extension, extract::State};
+use axum::{Extension, Json, extract::State};
 
 use crate::{
     error::AppResult,
     models::User,
-    schemas::token::{LoginResponse, RefreshResponse},
+    schemas::token::{LoginResponse, RefreshRequest, RefreshResponse},
     state::AppState,
 };
 
@@ -23,6 +23,7 @@ pub async fn login(
 pub async fn refresh(
     State(state): State<AppState>,
     Extension(user): Extension<User>,
+    Json(refresh_request): Json<RefreshRequest>,
 ) -> AppResult<RefreshResponse> {
     let access_token = state.auth_service.generate_access_token(&user)?;
     Ok(RefreshResponse::new(access_token))

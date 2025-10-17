@@ -3,7 +3,7 @@ use argon2::{
     password_hash::{SaltString, rand_core::OsRng},
 };
 use base64::{Engine, prelude::BASE64_URL_SAFE_NO_PAD};
-use chrono::Local;
+use chrono::Utc;
 use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation, decode, encode};
 use serde::{Deserialize, Serialize};
 use std::{
@@ -35,7 +35,7 @@ pub struct Claims {
 
 impl Claims {
     pub fn new(user_id: Uuid) -> Self {
-        let now = Local::now();
+        let now = Utc::now();
         let access_token_expires_at = now + ACCESS_TOKEN_VALIDITY_DURATION;
         let sub = user_id.to_string();
         let exp = access_token_expires_at.timestamp() as usize;
@@ -63,6 +63,18 @@ impl AuthService {
         }
     }
 
+    pub async fn validate_basic_auth(
+        &self,
+        email: &str,
+        password: &str,
+    ) -> ServiceResult<Option<User>> {
+        if let Some(user) = self.user_repository.find_by_email(email).await? {
+            verify_password(password, &user.password_hash)?;
+            return Ok(Some(user));
+        }
+        Ok(None)
+    }
+
     pub fn generate_access_token(&self, user: &User) -> ServiceResult<String> {
         let claims = Claims::new(user.id);
         let key = EncodingKey::from_secret(&*ENCRYPTION_KEY);
@@ -88,12 +100,20 @@ impl AuthService {
         Ok(BASE64_URL_SAFE_NO_PAD.encode(refresh_token))
     }
 
-    pub fn verify_password(&self, password: &str, password_hash: &str) -> ServiceResult<()> {
-        let parsed_hash = PasswordHash::new(password_hash).map_err(ServiceError::Hash)?;
-        ARGON2
-            .verify_password(password.as_bytes(), &parsed_hash)
-            .map_err(ServiceError::Hash)
+    pub fn validate_refresh_token(
+        &self,
+        user_id: Uuid,
+        refresh_token: String,
+    ) -> ServiceResult<String> {
+        todo!()
     }
+}
+
+fn verify_password(password: &str, password_hash: &str) -> ServiceResult<()> {
+    let parsed_hash = PasswordHash::new(password_hash).map_err(ServiceError::Hash)?;
+    ARGON2
+        .verify_password(password.as_bytes(), &parsed_hash)
+        .map_err(ServiceError::Hash)
 }
 
 fn generate_hash(password: &str) -> ServiceResult<String> {

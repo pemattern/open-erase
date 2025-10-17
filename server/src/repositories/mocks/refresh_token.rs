@@ -1,7 +1,7 @@
 use std::sync::{Arc, Mutex};
 
 use async_trait::async_trait;
-use chrono::{DateTime, Local};
+use chrono::DateTime;
 use uuid::Uuid;
 
 use crate::{

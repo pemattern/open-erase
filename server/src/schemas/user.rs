@@ -1,25 +1,24 @@
 use axum::{
-    Json,
     http::{StatusCode, header},
     response::{IntoResponse, Response},
 };
-use chrono::{DateTime, Local};
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::models::User;
+use crate::{models::User, schemas::json};
 
 #[derive(Serialize, Deserialize)]
 pub struct GetUserResponse {
     pub id: Uuid,
     pub email: String,
-    pub created_at: DateTime<Local>,
-    pub updated_at: DateTime<Local>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
 }
 
 impl IntoResponse for GetUserResponse {
     fn into_response(self) -> Response {
-        (StatusCode::OK, Json(self)).into_response()
+        (StatusCode::OK, json(self)).into_response()
     }
 }
 
@@ -44,8 +43,8 @@ pub struct PostUserRequest {
 pub struct PostUserResponse {
     pub id: Uuid,
     pub email: String,
-    pub created_at: DateTime<Local>,
-    pub updated_at: DateTime<Local>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
 }
 
 impl IntoResponse for PostUserResponse {
@@ -53,7 +52,7 @@ impl IntoResponse for PostUserResponse {
         (
             StatusCode::CREATED,
             [(header::LOCATION, format!("/{}", self.id))],
-            Json(self),
+            json(self),
         )
             .into_response()
     }
@@ -79,13 +78,13 @@ pub struct PatchUserRequest {
 pub struct PatchUserResponse {
     pub id: Uuid,
     pub email: String,
-    pub created_at: DateTime<Local>,
-    pub updated_at: DateTime<Local>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
 }
 
 impl IntoResponse for PatchUserResponse {
     fn into_response(self) -> Response {
-        (StatusCode::OK, Json(self)).into_response()
+        (StatusCode::OK, json(self)).into_response()
     }
 }
 

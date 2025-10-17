@@ -1,4 +1,4 @@
-use chrono::{DateTime, Local};
+use chrono::{DateTime, Utc};
 use sqlx::FromRow;
 use uuid::Uuid;
 
@@ -7,6 +7,6 @@ pub struct RefreshToken {
     pub id: Uuid,
     pub user_id: Uuid,
     pub refresh_token_hash: String,
-    pub created_at: DateTime<Local>,
-    pub updated_at: DateTime<Local>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
 }
