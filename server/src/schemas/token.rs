@@ -45,7 +45,7 @@ impl IntoResponse for LoginResponse {
 
 #[derive(Deserialize, ToSchema)]
 pub struct RefreshRequest {
-    pub access_token: String,
+    pub refresh_token: String,
 }
 
 #[derive(Serialize)]

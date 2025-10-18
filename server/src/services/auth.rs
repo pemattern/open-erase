@@ -14,7 +14,7 @@ use uuid::Uuid;
 
 use crate::{
     error::{ServiceError, ServiceResult},
-    models::User,
+    models::{RefreshToken, User},
     repositories::{refresh_token::RefreshTokenRepository, user::UserRepository},
 };
 
@@ -100,12 +100,16 @@ impl AuthService {
         Ok(BASE64_URL_SAFE_NO_PAD.encode(refresh_token))
     }
 
-    pub fn validate_refresh_token(
+    pub async fn find_refresh_token(
         &self,
-        user_id: Uuid,
         refresh_token: String,
-    ) -> ServiceResult<String> {
-        todo!()
+    ) -> ServiceResult<Option<RefreshToken>> {
+        let refresh_token_hash = generate_hash(&refresh_token)?;
+        let refresh_token = self
+            .refresh_token_repository
+            .find_by_refresh_token_hash(refresh_token_hash)
+            .await?;
+        Ok(refresh_token)
     }
 }
 

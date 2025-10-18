@@ -6,7 +6,10 @@ use crate::{error::RepositoryResult, models::RefreshToken};
 
 #[async_trait]
 pub trait RefreshTokenRepository: Send + Sync {
-    async fn find_by_user_id(&self, user_id: Uuid) -> RepositoryResult<Vec<RefreshToken>>;
+    async fn find_by_refresh_token_hash(
+        &self,
+        refresh_token_hash: String,
+    ) -> RepositoryResult<Option<RefreshToken>>;
     async fn create(
         &self,
         user_id: Uuid,
@@ -28,14 +31,17 @@ impl PostgresRefreshTokenRepository {
 
 #[async_trait]
 impl RefreshTokenRepository for PostgresRefreshTokenRepository {
-    async fn find_by_user_id(&self, id: Uuid) -> RepositoryResult<Vec<RefreshToken>> {
+    async fn find_by_refresh_token_hash(
+        &self,
+        refresh_token_hash: String,
+    ) -> RepositoryResult<Option<RefreshToken>> {
         let query = "
             SELECT * FROM refresh_tokens
-            WHERE id = $1;
+            WHERE refresh_token_hash = $1;
         ";
         let refresh_token = sqlx::query_as::<_, RefreshToken>(query)
-            .bind(id)
-            .fetch_all(&self.pool)
+            .bind(refresh_token_hash)
+            .fetch_optional(&self.pool)
             .await?;
         Ok(refresh_token)
     }

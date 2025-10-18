@@ -40,15 +40,17 @@ impl MockRefreshTokenRepository {
 
 #[async_trait]
 impl RefreshTokenRepository for MockRefreshTokenRepository {
-    async fn find_by_user_id(&self, id: Uuid) -> RepositoryResult<Vec<RefreshToken>> {
+    async fn find_by_refresh_token_hash(
+        &self,
+        refresh_token_hash: String,
+    ) -> RepositoryResult<Option<RefreshToken>> {
         Ok(self
             .data
             .lock()
             .unwrap()
             .clone()
             .into_iter()
-            .filter(|refresh_token| refresh_token.id == id)
-            .collect::<Vec<RefreshToken>>())
+            .find(|refresh_token| refresh_token.refresh_token_hash == refresh_token_hash))
     }
 
     async fn create(

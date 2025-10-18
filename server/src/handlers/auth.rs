@@ -1,7 +1,7 @@
 use axum::{Extension, Json, extract::State};
 
 use crate::{
-    error::AppResult,
+    error::{AppResult, ClientError},
     models::User,
     schemas::token::{LoginResponse, RefreshRequest, RefreshResponse},
     state::AppState,
@@ -25,6 +25,11 @@ pub async fn refresh(
     Extension(user): Extension<User>,
     Json(refresh_request): Json<RefreshRequest>,
 ) -> AppResult<RefreshResponse> {
+    let refresh_token = state
+        .auth_service
+        .find_refresh_token(refresh_request.refresh_token)
+        .await?
+        .ok_or(ClientError::Unauthorized)?;
     let access_token = state.auth_service.generate_access_token(&user)?;
     Ok(RefreshResponse::new(access_token))
 }
