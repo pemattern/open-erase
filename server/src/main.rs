@@ -26,51 +26,46 @@ mod test {
 
     use super::*;
 
-    use axum::{
-        body::Body,
-        http::{Request, StatusCode},
-    };
+    use axum::{body::Body, extract::Request, http::StatusCode, response::Response};
     use base64::{Engine, prelude::BASE64_STANDARD};
+    use serde::de::value::BytesDeserializer;
     use tower::ServiceExt;
     use uuid::Uuid;
 
-    #[tokio::test]
-    async fn login() {
+    async fn test_request(request: Request) -> Response {
         let state = AppState::mock();
         let app = routes::app(state.clone());
+        app.oneshot(request).await.unwrap()
+    }
+
+    #[tokio::test]
+    async fn valid_login() {
         let uri = "/api/auth/login";
         let valid_email_password = format!("{}:{}", User::mock().email, "password123");
         let valid_auth_header = format!("Basic {}", BASE64_STANDARD.encode(valid_email_password));
+        let valid_request = Request::builder()
+            .method("POST")
+            .uri(uri)
+            .header("Authorization", valid_auth_header)
+            .body(Body::empty())
+            .unwrap();
+        let response = test_request(valid_request).await;
+        assert_eq!(response.status(), StatusCode::OK);
+    }
 
+    #[tokio::test]
+    async fn invalid_login() {
+        let uri = "/api/auth/login";
         let invalid_email_password = format!("{}:{}", User::mock().email, "password456");
         let invalid_auth_header =
             format!("Basic {}", BASE64_STANDARD.encode(invalid_email_password));
-
-        let response = app
-            .clone()
-            .oneshot(
-                Request::builder()
-                    .method("POST")
-                    .uri(uri)
-                    .header("Authorization", valid_auth_header)
-                    .body(Body::empty())
-                    .unwrap(),
-            )
-            .await
+        let invalid_request = Request::builder()
+            .method("POST")
+            .uri(uri)
+            .header("Authorization", invalid_auth_header)
+            .body(Body::empty())
             .unwrap();
-        assert_eq!(response.status(), StatusCode::OK);
-
-        let response = app
-            .oneshot(
-                Request::builder()
-                    .method("POST")
-                    .uri(uri)
-                    .header("Authorization", invalid_auth_header)
-                    .body(Body::empty())
-                    .unwrap(),
-            )
-            .await
-            .unwrap();
+        let response = test_request(invalid_request).await;
         assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
     }
 

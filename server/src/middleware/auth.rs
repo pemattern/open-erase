@@ -49,7 +49,8 @@ pub async fn validate_basic_auth(
             authorization_header.username(),
             authorization_header.password(),
         )
-        .await?
+        .await
+        .map_err(|_| ClientError::Unauthorized)?
         .ok_or(ClientError::Unauthorized)?;
     request.extensions_mut().insert(user);
     Ok(next.run(request).await)
