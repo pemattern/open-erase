@@ -75,8 +75,8 @@ impl AuthService {
         Ok(None)
     }
 
-    pub fn generate_access_token(&self, user: &User) -> ServiceResult<String> {
-        let claims = Claims::new(user.id);
+    pub fn generate_access_token(&self, user_id: Uuid) -> ServiceResult<String> {
+        let claims = Claims::new(user_id);
         let key = EncodingKey::from_secret(&*ENCRYPTION_KEY);
         let access_token = encode(&Header::default(), &claims, &key)?;
         Ok(access_token)
@@ -102,9 +102,9 @@ impl AuthService {
 
     pub async fn find_refresh_token(
         &self,
-        refresh_token: String,
+        refresh_token: &str,
     ) -> ServiceResult<Option<RefreshToken>> {
-        let refresh_token_hash = generate_hash(&refresh_token)?;
+        let refresh_token_hash = generate_hash(refresh_token)?;
         let refresh_token = self
             .refresh_token_repository
             .find_by_refresh_token_hash(refresh_token_hash)

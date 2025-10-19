@@ -5,6 +5,7 @@ use axum::{
 };
 use axum_extra::{
     TypedHeader,
+    extract::CookieJar,
     headers::{
         Authorization,
         authorization::{Basic, Bearer},
@@ -17,8 +18,10 @@ use crate::{
     state::AppState,
 };
 
+pub const REFRESH_TOKEN_COOKIE: &str = "refresh_token";
+
 #[axum::debug_middleware]
-pub async fn validate_jwt(
+pub async fn validate_access_token(
     State(state): State<AppState>,
     header_result: Result<TypedHeader<Authorization<Bearer>>, TypedHeaderRejection>,
     mut request: Request,
@@ -31,6 +34,25 @@ pub async fn validate_jwt(
         .validate_access_token(access_token)
         .map_err(|_| ClientError::Unauthorized)?;
     request.extensions_mut().insert(claims);
+    Ok(next.run(request).await)
+}
+
+#[axum::debug_middleware]
+pub async fn validate_refresh_token(
+    State(state): State<AppState>,
+    jar: CookieJar,
+    mut request: Request,
+    next: Next,
+) -> AppResult<impl IntoResponse> {
+    let refresh_token_cookie = jar
+        .get(REFRESH_TOKEN_COOKIE)
+        .ok_or(ClientError::Unauthorized)?;
+    let refresh_token = state
+        .auth_service
+        .find_refresh_token(refresh_token_cookie.value())
+        .await?
+        .ok_or(ClientError::Unauthorized)?;
+    request.extensions_mut().insert(refresh_token);
     Ok(next.run(request).await)
 }
 

@@ -2,10 +2,9 @@ use axum::{
     http::{StatusCode, header},
     response::{IntoResponse, Response},
 };
-use serde::{Deserialize, Serialize};
-use utoipa::ToSchema;
+use serde::Serialize;
 
-use crate::schemas::json;
+use crate::{middleware::auth::REFRESH_TOKEN_COOKIE, schemas::json};
 
 #[derive(Serialize)]
 pub struct LoginResponse {
@@ -43,11 +42,6 @@ impl IntoResponse for LoginResponse {
     }
 }
 
-#[derive(Deserialize, ToSchema)]
-pub struct RefreshRequest {
-    pub refresh_token: String,
-}
-
 #[derive(Serialize)]
 pub struct RefreshResponse {
     pub access_token: String,
@@ -80,7 +74,7 @@ impl IntoResponse for RefreshResponse {
 
 fn refresh_token_cookie(refresh_token: &str) -> String {
     format!(
-        "refresh_token={}; HttpOnly; Secure; SameSite=Strict",
-        refresh_token
+        "{}={}; HttpOnly; Secure; SameSite=Strict",
+        REFRESH_TOKEN_COOKIE, refresh_token
     )
 }

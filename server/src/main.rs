@@ -28,7 +28,6 @@ mod test {
 
     use axum::{body::Body, extract::Request, http::StatusCode, response::Response};
     use base64::{Engine, prelude::BASE64_STANDARD};
-    use serde::de::value::BytesDeserializer;
     use tower::ServiceExt;
     use uuid::Uuid;
 
@@ -75,7 +74,7 @@ mod test {
         let app = routes::app(state.clone());
         let token = state
             .auth_service
-            .generate_access_token(&User::mock())
+            .generate_access_token(User::mock().id)
             .unwrap();
         let uri = format!("/api/user/{}", Uuid::default());
         let auth_header = format!("Bearer {}", token);
@@ -98,7 +97,7 @@ mod test {
         let app = routes::app(state.clone());
         let token = state
             .auth_service
-            .generate_access_token(&User::mock())
+            .generate_access_token(User::mock().id)
             .unwrap();
         let auth_header = format!("Bearer {}", token);
         let body = PostUserRequest {
@@ -126,7 +125,7 @@ mod test {
         let app = routes::app(state.clone());
         let token = state
             .auth_service
-            .generate_access_token(&User::mock())
+            .generate_access_token(User::mock().id)
             .unwrap();
         let auth_header = format!("Bearer {}", token);
         let uri = format!("/api/user/{}", User::mock().id);

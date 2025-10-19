@@ -1,9 +1,9 @@
-use axum::{Extension, Json, extract::State};
+use axum::{Extension, extract::State};
 
 use crate::{
-    error::{AppResult, ClientError},
-    models::User,
-    schemas::token::{LoginResponse, RefreshRequest, RefreshResponse},
+    error::AppResult,
+    models::{RefreshToken, User},
+    schemas::token::{LoginResponse, RefreshResponse},
     state::AppState,
 };
 
@@ -13,7 +13,7 @@ pub async fn login(
     State(state): State<AppState>,
     Extension(user): Extension<User>,
 ) -> AppResult<LoginResponse> {
-    let access_token = state.auth_service.generate_access_token(&user)?;
+    let access_token = state.auth_service.generate_access_token(user.id)?;
     let refresh_token = state.auth_service.generate_refresh_token(&user).await?;
     Ok(LoginResponse::new(access_token, refresh_token))
 }
@@ -22,14 +22,10 @@ pub async fn login(
 #[utoipa::path(post, path = "/auth/refresh")]
 pub async fn refresh(
     State(state): State<AppState>,
-    Extension(user): Extension<User>,
-    Json(refresh_request): Json<RefreshRequest>,
+    Extension(refresh_token): Extension<RefreshToken>,
 ) -> AppResult<RefreshResponse> {
-    let refresh_token = state
+    let access_token = state
         .auth_service
-        .find_refresh_token(refresh_request.refresh_token)
-        .await?
-        .ok_or(ClientError::Unauthorized)?;
-    let access_token = state.auth_service.generate_access_token(&user)?;
+        .generate_access_token(refresh_token.user_id)?;
     Ok(RefreshResponse::new(access_token))
 }

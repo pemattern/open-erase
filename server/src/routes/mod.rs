@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use axum::{Router, middleware};
+use axum::{Router, middleware, routing::post};
 use tower::ServiceBuilder;
 use tower_http::{
     compression::CompressionLayer,
@@ -10,12 +10,19 @@ use tower_http::{
 };
 use tracing::Level;
 
-use crate::error::{AppResult, ClientError};
-use crate::middleware::{
-    auth::{validate_basic_auth, validate_jwt},
-    log::log,
-};
 use crate::state::AppState;
+use crate::{
+    error::{AppResult, ClientError},
+    handlers::auth::refresh,
+    middleware::auth::validate_refresh_token,
+};
+use crate::{
+    handlers::auth::login,
+    middleware::{
+        auth::{validate_access_token, validate_basic_auth},
+        log::log,
+    },
+};
 
 mod auth;
 mod docs;
@@ -23,6 +30,8 @@ mod user;
 
 const API_PATH: &str = "/api";
 const AUTH_PATH: &str = "/auth";
+const LOGIN_PATH: &str = "/login";
+const REFRESH_PATH: &str = "/refresh";
 const USER_PATH: &str = "/user";
 
 const STATIC_ASSETS_PATH: &str = "/dist";
@@ -55,28 +64,42 @@ pub fn api_router(state: AppState) -> Router<AppState> {
     Router::new().nest(
         API_PATH,
         Router::new()
-            .merge(basic_auth_router(state.clone()))
-            .merge(jwt_auth_router(state.clone()))
+            .nest(
+                AUTH_PATH,
+                Router::new()
+                    .merge(basic_auth_router(state.clone()))
+                    .merge(refresh_token_auth_router(state.clone())),
+            )
+            .merge(access_token_auth_router(state.clone()))
             .merge(docs::router()),
     )
 }
 
-pub fn basic_auth_router(state: AppState) -> Router<AppState> {
+fn basic_auth_router(state: AppState) -> Router<AppState> {
     Router::new()
-        .nest(AUTH_PATH, auth::router())
+        .route(LOGIN_PATH, post(login))
         .layer(middleware::from_fn_with_state(state, validate_basic_auth))
 }
 
-pub fn jwt_auth_router(state: AppState) -> Router<AppState> {
+fn refresh_token_auth_router(state: AppState) -> Router<AppState> {
     Router::new()
-        .nest(USER_PATH, user::router())
-        .layer(middleware::from_fn_with_state(state, validate_jwt))
+        .route(REFRESH_PATH, post(refresh))
+        .layer(middleware::from_fn_with_state(
+            state,
+            validate_refresh_token,
+        ))
 }
 
-pub fn web_service() -> ServeDir<ServeFile> {
+fn access_token_auth_router(state: AppState) -> Router<AppState> {
+    Router::new()
+        .nest(USER_PATH, user::router())
+        .layer(middleware::from_fn_with_state(state, validate_access_token))
+}
+
+fn web_service() -> ServeDir<ServeFile> {
     ServeDir::new(STATIC_ASSETS_PATH).fallback(ServeFile::new(INDEX_HTML_PATH))
 }
 
-pub async fn method_not_allowed_fallback() -> AppResult<()> {
+async fn method_not_allowed_fallback() -> AppResult<()> {
     Err(ClientError::MethodNotAllowed.into())
 }
