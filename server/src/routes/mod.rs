@@ -24,7 +24,6 @@ use crate::{
     },
 };
 
-mod auth;
 mod docs;
 mod user;
 
