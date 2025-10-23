@@ -1,7 +1,7 @@
 use std::sync::{Arc, Mutex};
 
 use async_trait::async_trait;
-use chrono::DateTime;
+use chrono::{DateTime, Duration};
 use uuid::Uuid;
 
 use crate::{
@@ -16,9 +16,11 @@ impl RefreshToken {
             id: Uuid::default(),
             user_id: Uuid::default(),
             // password123
-            refresh_token_hash: String::from(
+            opaque_token_hash: String::from(
                 "$argon2id$v=19$m=16,t=2,p=1$NjFWcEMwUEQ0dmZXcDMwSg$TfJtuSrudRp6hhV2mFSt3g",
             ),
+            is_used: false,
+            expires_at: DateTime::default() + Duration::days(60),
             created_at: DateTime::default(),
             updated_at: DateTime::default(),
         }
@@ -40,17 +42,15 @@ impl MockRefreshTokenRepository {
 
 #[async_trait]
 impl RefreshTokenRepository for MockRefreshTokenRepository {
-    async fn find_by_refresh_token_hash(
-        &self,
-        refresh_token_hash: String,
-    ) -> RepositoryResult<Option<RefreshToken>> {
+    async fn find_by_id(&self, id: Uuid) -> RepositoryResult<RefreshToken> {
         Ok(self
             .data
             .lock()
             .unwrap()
             .clone()
             .into_iter()
-            .find(|refresh_token| refresh_token.refresh_token_hash == refresh_token_hash))
+            .find(|refresh_token| refresh_token.id == id && refresh_token.is_valid())
+            .ok_or(RepositoryError::Test)?)
     }
 
     async fn create(
@@ -60,7 +60,7 @@ impl RefreshTokenRepository for MockRefreshTokenRepository {
     ) -> RepositoryResult<RefreshToken> {
         let mut refresh_token = RefreshToken::mock();
         refresh_token.user_id = user_id;
-        refresh_token.refresh_token_hash = refresh_token_hash;
+        refresh_token.opaque_token_hash = refresh_token_hash;
         let mut data = self.data.lock().unwrap();
         data.push(refresh_token.clone());
         Ok(refresh_token)

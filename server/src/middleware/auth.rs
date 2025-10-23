@@ -49,9 +49,9 @@ pub async fn validate_refresh_token(
         .ok_or(ClientError::Unauthorized)?;
     let refresh_token = state
         .auth_service
-        .find_refresh_token(refresh_token_cookie.value())
-        .await?
-        .ok_or(ClientError::Unauthorized)?;
+        .validate_refresh_token(refresh_token_cookie.value())
+        .await
+        .map_err(|_| ClientError::Unauthorized)?;
     request.extensions_mut().insert(refresh_token);
     Ok(next.run(request).await)
 }

@@ -91,24 +91,33 @@ impl AuthService {
     }
 
     pub async fn generate_refresh_token(&self, user: &User) -> ServiceResult<String> {
-        let refresh_token_bytes = generate_byte_key::<KEY_LENGTH>();
-        let refresh_token = BASE64_URL_SAFE_NO_PAD.encode(refresh_token_bytes);
-        let refresh_token_hash = generate_hash(&refresh_token)?;
-        self.refresh_token_repository
-            .create(user.id, refresh_token_hash)
-            .await?;
-        Ok(BASE64_URL_SAFE_NO_PAD.encode(refresh_token))
-    }
-
-    pub async fn find_refresh_token(
-        &self,
-        refresh_token: &str,
-    ) -> ServiceResult<Option<RefreshToken>> {
-        let refresh_token_hash = generate_hash(refresh_token)?;
+        let opaque_token_bytes = generate_byte_key::<KEY_LENGTH>();
+        let opaque_token_raw = BASE64_URL_SAFE_NO_PAD.encode(opaque_token_bytes);
+        let opaque_token_hash = generate_hash(&opaque_token_raw)?;
         let refresh_token = self
             .refresh_token_repository
-            .find_by_refresh_token_hash(refresh_token_hash)
+            .create(user.id, opaque_token_hash)
             .await?;
+        let composite_refresh_token = format!("{}.{}", refresh_token.id, opaque_token_raw);
+        Ok(composite_refresh_token)
+    }
+
+    pub async fn validate_refresh_token(
+        &self,
+        composite_refresh_token: &str,
+    ) -> ServiceResult<RefreshToken> {
+        let (refresh_token_id_raw, opaque_token_raw) = composite_refresh_token
+            .split_once('.')
+            .ok_or(ServiceError::Parsing)?;
+        let refresh_token_id = Uuid::parse_str(refresh_token_id_raw)?;
+        let refresh_token = self
+            .refresh_token_repository
+            .find_by_id(refresh_token_id)
+            .await?;
+        if !refresh_token.is_valid() {
+            return Err(ServiceError::Validation);
+        }
+        verify_password(opaque_token_raw, &refresh_token.opaque_token_hash)?;
         Ok(refresh_token)
     }
 }

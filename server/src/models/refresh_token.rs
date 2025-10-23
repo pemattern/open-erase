@@ -6,7 +6,19 @@ use uuid::Uuid;
 pub struct RefreshToken {
     pub id: Uuid,
     pub user_id: Uuid,
-    pub refresh_token_hash: String,
+    pub opaque_token_hash: String,
+    pub is_used: bool,
+    pub expires_at: DateTime<Utc>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
+}
+
+impl RefreshToken {
+    pub fn is_expired(&self) -> bool {
+        Utc::now() > self.expires_at
+    }
+
+    pub fn is_valid(&self) -> bool {
+        !self.is_expired() && !self.is_used
+    }
 }

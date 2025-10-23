@@ -18,7 +18,7 @@ impl IntoResponse for AppError {
     fn into_response(self) -> Response {
         match self {
             AppError::Client(client_error) => client_error.into_response(),
-            AppError::Service(internal_error) => internal_error.into_response(),
+            AppError::Service(service_error) => service_error.into_response(),
         }
     }
 }
@@ -57,6 +57,8 @@ pub enum ServiceError {
     Repository(RepositoryError),
     Hash(argon2::password_hash::Error),
     Token(jsonwebtoken::errors::Error),
+    Parsing,
+    Validation,
     Uuid(uuid::Error),
     Serialization(serde_json::Error),
 }
@@ -115,19 +117,6 @@ impl From<sqlx::Error> for RepositoryError {
 struct ErrorResponse {
     status_code: u16,
     message: String,
-}
-
-impl From<ServiceError> for ErrorResponse {
-    fn from(error: ServiceError) -> Self {
-        tracing::error!("{:?}", error);
-        match error {
-            ServiceError::Repository(_error) => ErrorResponse::internal_server_error(),
-            ServiceError::Hash(_error) => ErrorResponse::unauthorized(),
-            ServiceError::Token(_error) => ErrorResponse::internal_server_error(),
-            ServiceError::Uuid(_error) => ErrorResponse::internal_server_error(),
-            ServiceError::Serialization(_error) => ErrorResponse::internal_server_error(),
-        }
-    }
 }
 
 impl ErrorResponse {
