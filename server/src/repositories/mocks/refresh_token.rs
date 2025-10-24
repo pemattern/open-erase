@@ -15,6 +15,7 @@ impl RefreshToken {
         Self {
             id: Uuid::default(),
             user_id: Uuid::default(),
+            parent_id: None,
             // password123
             opaque_token_hash: String::from(
                 "$argon2id$v=19$m=16,t=2,p=1$NjFWcEMwUEQ0dmZXcDMwSg$TfJtuSrudRp6hhV2mFSt3g",
@@ -55,14 +56,31 @@ impl RefreshTokenRepository for MockRefreshTokenRepository {
     async fn create(
         &self,
         user_id: Uuid,
+        parent_id: Option<Uuid>,
         opaque_token_hash: String,
     ) -> RepositoryResult<RefreshToken> {
         let mut refresh_token = RefreshToken::mock();
         refresh_token.user_id = user_id;
+        refresh_token.parent_id = parent_id;
         refresh_token.opaque_token_hash = opaque_token_hash;
         let mut data = self.data.lock().unwrap();
         data.push(refresh_token.clone());
         Ok(refresh_token)
+    }
+
+    async fn mark_as_used(&self, id: Uuid) -> RepositoryResult<RefreshToken> {
+        if let Some(mut refresh_token) = self
+            .data
+            .lock()
+            .unwrap()
+            .iter_mut()
+            .find(|refresh_token| refresh_token.id == id)
+            .cloned()
+        {
+            refresh_token.is_used = true;
+            return Ok(refresh_token);
+        }
+        Err(RepositoryError::Test)
     }
 
     async fn delete(&self, id: Uuid) -> RepositoryResult<RefreshToken> {

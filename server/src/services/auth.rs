@@ -91,13 +91,31 @@ impl AuthService {
             .map(|token_data| token_data.claims)
     }
 
-    pub async fn generate_refresh_token(&self, user: &User) -> ServiceResult<String> {
+    pub async fn generate_refresh_token_from_login(&self, user_id: Uuid) -> ServiceResult<String> {
+        self.generate_refresh_token(user_id, None).await
+    }
+
+    pub async fn cycle_refresh_token(&self, refresh_token: &RefreshToken) -> ServiceResult<String> {
+        let _ = self
+            .refresh_token_repository
+            .mark_as_used(refresh_token.id)
+            .await?;
+
+        self.generate_refresh_token(refresh_token.user_id, Some(refresh_token.id))
+            .await
+    }
+
+    async fn generate_refresh_token(
+        &self,
+        user_id: Uuid,
+        parent_id: Option<Uuid>,
+    ) -> ServiceResult<String> {
         let opaque_token_bytes = generate_byte_key::<KEY_LENGTH>();
         let opaque_token_raw = BASE64_URL_SAFE_NO_PAD.encode(opaque_token_bytes);
         let opaque_token_hash = generate_hash(&opaque_token_raw)?;
         let refresh_token = self
             .refresh_token_repository
-            .create(user.id, opaque_token_hash)
+            .create(user_id, parent_id, opaque_token_hash)
             .await?;
         let composite_refresh_token = format!("{}.{}", refresh_token.id, opaque_token_raw);
         Ok(composite_refresh_token)

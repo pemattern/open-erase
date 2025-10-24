@@ -1,6 +1,7 @@
 use app::App;
 
 mod app;
+mod login;
 mod navbar;
 
 fn main() {

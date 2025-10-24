@@ -14,7 +14,10 @@ pub async fn login(
     Extension(user): Extension<User>,
 ) -> AppResult<LoginResponse> {
     let access_token = state.auth_service.generate_access_token(user.id)?;
-    let refresh_token = state.auth_service.generate_refresh_token(&user).await?;
+    let refresh_token = state
+        .auth_service
+        .generate_refresh_token_from_login(user.id)
+        .await?;
     Ok(LoginResponse::new(access_token, refresh_token))
 }
 
@@ -27,5 +30,9 @@ pub async fn refresh(
     let access_token = state
         .auth_service
         .generate_access_token(refresh_token.user_id)?;
-    Ok(RefreshResponse::new(access_token))
+    let new_refresh_token = state
+        .auth_service
+        .cycle_refresh_token(&refresh_token)
+        .await?;
+    Ok(RefreshResponse::new(access_token, new_refresh_token))
 }

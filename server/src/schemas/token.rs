@@ -45,14 +45,16 @@ impl IntoResponse for LoginResponse {
 #[derive(Serialize)]
 pub struct RefreshResponse {
     pub access_token: String,
+    pub refresh_token: String,
     pub token_type: String,
 }
 
 impl RefreshResponse {
-    pub fn new(access_token: String) -> Self {
+    pub fn new(access_token: String, refresh_token: String) -> Self {
         let token_type = String::from("Bearer");
         Self {
             access_token,
+            refresh_token,
             token_type,
         }
     }

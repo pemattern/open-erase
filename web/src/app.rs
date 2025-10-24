@@ -1,7 +1,7 @@
 use leptos::prelude::*;
 use leptos_router::{components::*, path};
 
-use crate::navbar::NavBar;
+use crate::{login::Login, navbar::NavBar};
 
 #[component]
 pub fn App() -> impl IntoView {
@@ -13,6 +13,7 @@ pub fn App() -> impl IntoView {
                 <Routes fallback=NotFound>
                     <Route path=path!("/") view=Home />
                 </Routes>
+                <Login />
             </main>
         </Router>
     }

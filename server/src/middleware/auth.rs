@@ -64,7 +64,6 @@ pub async fn validate_basic_auth(
     next: Next,
 ) -> AppResult<impl IntoResponse> {
     let authorization_header = header_result.map_err(|_| ClientError::Unauthorized)?;
-
     let user = state
         .auth_service
         .validate_basic_auth(

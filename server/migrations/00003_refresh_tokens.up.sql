@@ -1,6 +1,7 @@
 CREATE TABLE refresh_tokens (
     id UUID PRIMARY KEY DEFAULT uuidv7(),
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    parent_id UUID REFERENCES refresh_tokens(id),
     opaque_token_hash VARCHAR(255) UNIQUE NOT NULL,
     is_used BOOLEAN NOT NULL DEFAULT FALSE,
     expires_at TIMESTAMPTZ NOT NULL DEFAULT (NOW() + INTERVAL '2 months'),
