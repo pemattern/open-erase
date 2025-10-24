@@ -33,7 +33,7 @@ impl IntoResponse for LoginResponse {
                 (header::PRAGMA, "no-cache"),
                 (
                     header::SET_COOKIE,
-                    &refresh_token_cookie(&self.refresh_token),
+                    &set_refresh_token_cookie(&self.refresh_token),
                 ),
             ],
             json(self),
@@ -67,6 +67,10 @@ impl IntoResponse for RefreshResponse {
             [
                 (header::CACHE_CONTROL, "no-store"),
                 (header::PRAGMA, "no-cache"),
+                (
+                    header::SET_COOKIE,
+                    &set_refresh_token_cookie(&self.refresh_token),
+                ),
             ],
             json(self),
         )
@@ -74,9 +78,33 @@ impl IntoResponse for RefreshResponse {
     }
 }
 
-fn refresh_token_cookie(refresh_token: &str) -> String {
+fn set_refresh_token_cookie(refresh_token: &str) -> String {
     format!(
         "{}={}; HttpOnly; Secure; SameSite=Strict",
         REFRESH_TOKEN_COOKIE, refresh_token
     )
+}
+
+fn reset_refresh_token_cookie() -> String {
+    let mut cookie = set_refresh_token_cookie("");
+    cookie.push_str("; MaxAge=0");
+    cookie
+}
+
+#[derive(Serialize)]
+pub struct LogoutResponse;
+
+impl IntoResponse for LogoutResponse {
+    fn into_response(self) -> Response {
+        (
+            StatusCode::OK,
+            [
+                (header::CACHE_CONTROL, "no-store"),
+                (header::PRAGMA, "no-cache"),
+                (header::SET_COOKIE, &reset_refresh_token_cookie()),
+            ],
+            json(self),
+        )
+            .into_response()
+    }
 }

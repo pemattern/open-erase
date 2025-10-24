@@ -3,7 +3,8 @@ use axum::{Extension, extract::State};
 use crate::{
     error::AppResult,
     models::{RefreshToken, User},
-    schemas::token::{LoginResponse, RefreshResponse},
+    schemas::token::{LoginResponse, LogoutResponse, RefreshResponse},
+    services::auth::Claims,
     state::AppState,
 };
 
@@ -35,4 +36,18 @@ pub async fn refresh(
         .cycle_refresh_token(&refresh_token)
         .await?;
     Ok(RefreshResponse::new(access_token, new_refresh_token))
+}
+
+#[axum::debug_handler]
+#[utoipa::path(post, path = "/auth/logout")]
+pub async fn logout(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Extension(refresh_token): Extension<RefreshToken>,
+) -> AppResult<LogoutResponse> {
+    let refresh_token = state
+        .auth_service
+        .mark_refresh_token_as_used(&refresh_token)
+        .await?;
+    Ok(LogoutResponse)
 }

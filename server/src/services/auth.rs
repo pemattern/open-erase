@@ -13,7 +13,7 @@ use std::{
 use uuid::Uuid;
 
 use crate::{
-    error::{ServiceError, ServiceResult},
+    error::ServiceResult,
     models::{RefreshToken, User},
     repositories::{refresh_token::RefreshTokenRepository, user::UserRepository},
 };
@@ -103,6 +103,17 @@ impl AuthService {
 
         self.generate_refresh_token(refresh_token.user_id, Some(refresh_token.id))
             .await
+    }
+
+    pub async fn mark_refresh_token_as_used(
+        &self,
+        refresh_token: &RefreshToken,
+    ) -> ServiceResult<RefreshToken> {
+        let refresh_token = self
+            .refresh_token_repository
+            .mark_as_used(refresh_token.id)
+            .await?;
+        Ok(refresh_token)
     }
 
     async fn generate_refresh_token(
