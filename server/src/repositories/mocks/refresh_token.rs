@@ -42,25 +42,24 @@ impl MockRefreshTokenRepository {
 
 #[async_trait]
 impl RefreshTokenRepository for MockRefreshTokenRepository {
-    async fn find_by_id(&self, id: Uuid) -> RepositoryResult<RefreshToken> {
+    async fn find_by_id(&self, id: Uuid) -> RepositoryResult<Option<RefreshToken>> {
         Ok(self
             .data
             .lock()
             .unwrap()
             .clone()
             .into_iter()
-            .find(|refresh_token| refresh_token.id == id && refresh_token.is_valid())
-            .ok_or(RepositoryError::Test)?)
+            .find(|refresh_token| refresh_token.id == id && refresh_token.is_valid()))
     }
 
     async fn create(
         &self,
         user_id: Uuid,
-        refresh_token_hash: String,
+        opaque_token_hash: String,
     ) -> RepositoryResult<RefreshToken> {
         let mut refresh_token = RefreshToken::mock();
         refresh_token.user_id = user_id;
-        refresh_token.opaque_token_hash = refresh_token_hash;
+        refresh_token.opaque_token_hash = opaque_token_hash;
         let mut data = self.data.lock().unwrap();
         data.push(refresh_token.clone());
         Ok(refresh_token)

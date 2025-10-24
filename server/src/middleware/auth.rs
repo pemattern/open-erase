@@ -31,8 +31,8 @@ pub async fn validate_access_token(
     let access_token = authorization_header.token();
     let claims = state
         .auth_service
-        .validate_access_token(access_token)
-        .map_err(|_| ClientError::Unauthorized)?;
+        .get_valid_access_token_claims(access_token)
+        .ok_or(ClientError::Unauthorized)?;
     request.extensions_mut().insert(claims);
     Ok(next.run(request).await)
 }
@@ -49,9 +49,9 @@ pub async fn validate_refresh_token(
         .ok_or(ClientError::Unauthorized)?;
     let refresh_token = state
         .auth_service
-        .validate_refresh_token(refresh_token_cookie.value())
-        .await
-        .map_err(|_| ClientError::Unauthorized)?;
+        .get_valid_refresh_token(refresh_token_cookie.value())
+        .await?
+        .ok_or(ClientError::Unauthorized)?;
     request.extensions_mut().insert(refresh_token);
     Ok(next.run(request).await)
 }

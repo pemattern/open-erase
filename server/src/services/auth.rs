@@ -68,26 +68,27 @@ impl AuthService {
         email: &str,
         password: &str,
     ) -> ServiceResult<Option<User>> {
-        if let Some(user) = self.user_repository.find_by_email(email).await? {
-            verify_password(password, &user.password_hash)?;
+        if let Some(user) = self.user_repository.find_by_email(email).await?
+            && is_valid_password(password, &user.password_hash)
+        {
             return Ok(Some(user));
-        }
+        };
         Ok(None)
     }
 
     pub fn generate_access_token(&self, user_id: Uuid) -> ServiceResult<String> {
         let claims = Claims::new(user_id);
         let key = EncodingKey::from_secret(&*ENCRYPTION_KEY);
-        let access_token = encode(&Header::default(), &claims, &key)?;
-        Ok(access_token)
+        Ok(encode(&Header::default(), &claims, &key)?)
     }
 
-    pub fn validate_access_token(&self, access_token: &str) -> ServiceResult<Claims> {
+    pub fn get_valid_access_token_claims(&self, access_token: &str) -> Option<Claims> {
         let key = DecodingKey::from_secret(&*ENCRYPTION_KEY);
         let mut validation = Validation::new(jsonwebtoken::Algorithm::HS256);
         validation.set_issuer(&[ISSUER]);
-        let claims = decode::<Claims>(access_token, &key, &validation)?.claims;
-        Ok(claims)
+        decode::<Claims>(access_token, &key, &validation)
+            .ok()
+            .map(|token_data| token_data.claims)
     }
 
     pub async fn generate_refresh_token(&self, user: &User) -> ServiceResult<String> {
@@ -102,39 +103,42 @@ impl AuthService {
         Ok(composite_refresh_token)
     }
 
-    pub async fn validate_refresh_token(
+    pub async fn get_valid_refresh_token(
         &self,
         composite_refresh_token: &str,
-    ) -> ServiceResult<RefreshToken> {
-        let (refresh_token_id_raw, opaque_token_raw) = composite_refresh_token
-            .split_once('.')
-            .ok_or(ServiceError::Parsing)?;
-        let refresh_token_id = Uuid::parse_str(refresh_token_id_raw)?;
-        let refresh_token = self
-            .refresh_token_repository
-            .find_by_id(refresh_token_id)
-            .await?;
-        if !refresh_token.is_valid() {
-            return Err(ServiceError::Validation);
-        }
-        verify_password(opaque_token_raw, &refresh_token.opaque_token_hash)?;
-        Ok(refresh_token)
+    ) -> ServiceResult<Option<RefreshToken>> {
+        if let Some((refresh_token_id_raw, opaque_token_raw)) =
+            composite_refresh_token.split_once('.')
+            && let Ok(refresh_token_id) = Uuid::parse_str(refresh_token_id_raw)
+            && let Some(refresh_token) = self
+                .refresh_token_repository
+                .find_by_id(refresh_token_id)
+                .await?
+            && refresh_token.is_valid()
+            && is_valid_password(opaque_token_raw, &refresh_token.opaque_token_hash)
+        {
+            return Ok(Some(refresh_token));
+        };
+        Ok(None)
     }
 }
 
-fn verify_password(password: &str, password_hash: &str) -> ServiceResult<()> {
-    let parsed_hash = PasswordHash::new(password_hash).map_err(ServiceError::Hash)?;
-    ARGON2
-        .verify_password(password.as_bytes(), &parsed_hash)
-        .map_err(ServiceError::Hash)
+fn is_valid_password(password: &str, password_hash: &str) -> bool {
+    if let Ok(parsed_hash) = PasswordHash::new(password_hash)
+        && ARGON2
+            .verify_password(password.as_bytes(), &parsed_hash)
+            .is_ok()
+    {
+        return true;
+    }
+    false
 }
 
 fn generate_hash(password: &str) -> ServiceResult<String> {
     let salt_string = SaltString::generate(&mut OsRng);
-    ARGON2
+    Ok(ARGON2
         .hash_password(password.as_bytes(), &salt_string)
-        .map(|hash| hash.to_string())
-        .map_err(ServiceError::Hash)
+        .map(|hash| hash.to_string())?)
 }
 
 fn generate_byte_key<const N: usize>() -> [u8; N] {

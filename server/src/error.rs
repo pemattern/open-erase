@@ -57,10 +57,9 @@ pub enum ServiceError {
     Repository(RepositoryError),
     Hash(argon2::password_hash::Error),
     Token(jsonwebtoken::errors::Error),
-    Parsing,
-    Validation,
     Uuid(uuid::Error),
     Serialization(serde_json::Error),
+    Validation,
 }
 
 impl IntoResponse for ServiceError {

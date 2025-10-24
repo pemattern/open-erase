@@ -6,11 +6,11 @@ use crate::{error::RepositoryResult, models::RefreshToken};
 
 #[async_trait]
 pub trait RefreshTokenRepository: Send + Sync {
-    async fn find_by_id(&self, id: Uuid) -> RepositoryResult<RefreshToken>;
+    async fn find_by_id(&self, id: Uuid) -> RepositoryResult<Option<RefreshToken>>;
     async fn create(
         &self,
         user_id: Uuid,
-        refresh_token_hash: String,
+        opaque_token_hash: String,
     ) -> RepositoryResult<RefreshToken>;
     async fn delete(&self, id: Uuid) -> RepositoryResult<RefreshToken>;
 }
@@ -28,14 +28,14 @@ impl PostgresRefreshTokenRepository {
 
 #[async_trait]
 impl RefreshTokenRepository for PostgresRefreshTokenRepository {
-    async fn find_by_id(&self, id: Uuid) -> RepositoryResult<RefreshToken> {
+    async fn find_by_id(&self, id: Uuid) -> RepositoryResult<Option<RefreshToken>> {
         let query = "
             SELECT * FROM refresh_tokens
             WHERE id = $1;
         ";
         let refresh_token = sqlx::query_as::<_, RefreshToken>(query)
             .bind(id)
-            .fetch_one(&self.pool)
+            .fetch_optional(&self.pool)
             .await?;
         Ok(refresh_token)
     }
@@ -43,16 +43,16 @@ impl RefreshTokenRepository for PostgresRefreshTokenRepository {
     async fn create(
         &self,
         user_id: Uuid,
-        refresh_token_hash: String,
+        opaque_token_hash: String,
     ) -> RepositoryResult<RefreshToken> {
         let query = "
-            INSERT INTO refresh_tokens (user_id, refresh_token_hash)
+            INSERT INTO refresh_tokens (user_id, opaque_token_hash)
             VALUES ($1, $2)
             RETURNING *;
         ";
         let user = sqlx::query_as::<_, RefreshToken>(query)
             .bind(user_id)
-            .bind(&refresh_token_hash)
+            .bind(&opaque_token_hash)
             .fetch_one(&self.pool)
             .await?;
         Ok(user)
