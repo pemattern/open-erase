@@ -63,7 +63,7 @@ impl AuthService {
         }
     }
 
-    pub async fn validate_basic_auth(
+    pub async fn get_user_from_basic_auth(
         &self,
         email: &str,
         password: &str,

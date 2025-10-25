@@ -39,10 +39,27 @@ impl ReportRepository for PostgresReportRepository {
     }
 
     async fn create(&self) -> RepositoryResult<Report> {
-        todo!()
+        let query = "
+            INSERT INTO reports
+            DEFAULT VALUES
+            RETURNING *;
+        ";
+        let report = sqlx::query_as::<_, Report>(query)
+            .fetch_one(&self.pool)
+            .await?;
+        Ok(report)
     }
 
     async fn delete(&self, id: Uuid) -> RepositoryResult<Report> {
-        todo!()
+        let query = "
+            DELETE FROM reports
+            WHERE id = $1
+            RETURNING *;  
+        ";
+        let report = sqlx::query_as::<_, Report>(query)
+            .bind(id)
+            .fetch_one(&self.pool)
+            .await?;
+        Ok(report)
     }
 }

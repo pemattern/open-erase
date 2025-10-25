@@ -66,12 +66,11 @@ pub async fn validate_basic_auth(
     let authorization_header = header_result.map_err(|_| ClientError::Unauthorized)?;
     let user = state
         .auth_service
-        .validate_basic_auth(
+        .get_user_from_basic_auth(
             authorization_header.username(),
             authorization_header.password(),
         )
-        .await
-        .map_err(|_| ClientError::Unauthorized)?
+        .await?
         .ok_or(ClientError::Unauthorized)?;
     request.extensions_mut().insert(user);
     Ok(next.run(request).await)
