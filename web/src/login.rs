@@ -1,10 +1,14 @@
 use leptos::prelude::*;
+use leptos_router::components::Form;
 
 #[component]
 pub fn Login() -> impl IntoView {
     view! {
-        <form>
-            <input />
-        </form>
+        <div>
+            "Login:"
+            <Form method="POST" action="">
+                <input />
+            </Form>
+        </div>
     }
 }

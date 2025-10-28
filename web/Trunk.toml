@@ -1,2 +1,6 @@
+[serve]
+port = 3000
+
 [tools]
-tailwindcss = "4.1.7"
+tailwindcss = "4.1.16"
+wasm_bindgen = "0.2.100"

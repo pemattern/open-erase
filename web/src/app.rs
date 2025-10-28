@@ -6,25 +6,16 @@ use crate::{login::Login, navbar::NavBar};
 #[component]
 pub fn App() -> impl IntoView {
     view! {
-        <Router>
-            <Logo />
-            <NavBar />
-            <main>
-                <Routes fallback=NotFound>
-                    <Route path=path!("/") view=Home />
-                </Routes>
-                <Login />
-            </main>
-        </Router>
-    }
-}
-
-#[component]
-fn Logo() -> impl IntoView {
-    view! {
-        <div class="flex font-mono text-4xl pt-6 pl-6">
-            <div class="text-dark-blue">open</div>
-            <div class="dark-gray">erase</div>
+        <div class="flex flex-row">
+            <Router>
+                <NavBar/>
+                <main class="w-full rounded-md bg-light-gray p-4 m-4">
+                    <Routes fallback=NotFound>
+                        <Route path=path!("") view=Home/>
+                        <Route path=path!("login") view=Login/>
+                    </Routes>
+                </main>
+            </Router>
         </div>
     }
 }
@@ -32,7 +23,7 @@ fn Logo() -> impl IntoView {
 #[component]
 pub fn Home() -> impl IntoView {
     view! {
-        <div>Hello World!</div>
+        <div>"Hello World!"</div>
     }
 }
 
@@ -40,7 +31,7 @@ pub fn Home() -> impl IntoView {
 pub fn NotFound() -> impl IntoView {
     view! {
         <div>
-            We couldnt find the page youre looking for!
+            "We couldnt find the page youre looking for!"
         </div>
     }
 }

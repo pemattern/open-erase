@@ -2,6 +2,18 @@ use leptos::prelude::*;
 use leptos_icons::Icon;
 use leptos_router::{components::A, hooks::use_location};
 
+#[component]
+fn Logo() -> impl IntoView {
+    view! {
+        <A href="/">
+            <div class="flex font-mono text-4xl pb-4">
+                <div class="text-dark-blue">open</div>
+                <div class="dark-gray">erase</div>
+            </div>
+        </A>
+    }
+}
+
 struct NavBarData {
     path: &'static str,
     text: &'static str,
@@ -23,17 +35,14 @@ const NAVBAR_DATA: &[NavBarData] = &[
 #[component]
 pub fn NavBar() -> impl IntoView {
     view! {
-        <nav>
-            <ul class="max-w-64 h-screen m-4 text-dark-gray font-sans">
-                {NAVBAR_DATA
-                    .iter()
-                    .map(|item| view! {
-                        <li>
-                            <NavBarEntry data=item/>
-                        </li>
-                    })
-                    .collect_view()}
-            </ul>
+        <nav class="flex-col w-72 h-screen p-4">
+            <Logo/>
+            {NAVBAR_DATA
+                .iter()
+                .map(|item| view! {
+                        <NavBarEntry data=item/>
+                })
+                .collect_view()}
         </nav>
     }
 }
@@ -44,17 +53,15 @@ fn NavBarEntry(data: &'static NavBarData) -> impl IntoView {
     let is_current = move || location.pathname.get() == data.path;
 
     view! {
-        <li class="m-2 text-xl">
-            <div class=(["bg-light-blue", "text-dark-blue", "rounded-md", "bold"], move || is_current())>
-                <div class="p-4">
-                    <A href=data.path>
-                        <div class="ml-2 flex items-center gap-4">
-                            <Icon icon={data.icon} />
-                            {data.text}
-                        </div>
-                    </A>
-                </div>
+        <div class=(["bg-light-blue", "text-dark-blue", "rounded-md", "bold"], move || is_current())>
+            <div class="p-4 w-fit text-lg">
+                <A href=data.path>
+                    <div class="ml-2 flex items-center gap-4">
+                        <Icon icon={data.icon} />
+                        {data.text}
+                    </div>
+                </A>
             </div>
-        </li>
+        </div>
     }
 }
