@@ -3,6 +3,7 @@ use std::time::Duration;
 use axum::{Router, middleware, routing::post};
 use tower::ServiceBuilder;
 use tower_http::{
+    CompressionLevel,
     compression::CompressionLayer,
     services::{ServeDir, ServeFile},
     timeout::TimeoutLayer,
@@ -52,7 +53,14 @@ pub fn app(state: AppState) -> Router {
                             tower_http::trace::DefaultOnResponse::new().level(Level::INFO),
                         ),
                 )
-                .layer(CompressionLayer::new())
+                .layer(
+                    CompressionLayer::new()
+                        .quality(CompressionLevel::Best)
+                        .br(true)
+                        .no_gzip()
+                        .no_deflate()
+                        .no_zstd(),
+                )
                 .layer(TimeoutLayer::new(Duration::from_secs(5)))
                 .layer(middleware::from_fn(log)),
         )
