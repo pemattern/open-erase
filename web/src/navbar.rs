@@ -37,6 +37,7 @@ pub fn NavBar() -> impl IntoView {
     view! {
         <nav class="w-72 h-screen">
             <Logo/>
+            <hr class="w-48 h-px mx-auto mb-2 bg-light-blue border-0 rounded-sm" />
             <div class="flex flex-col gap-y-2 pl-4 pr-2">
                 {NAVBAR_DATA
                     .iter()
@@ -45,6 +46,7 @@ pub fn NavBar() -> impl IntoView {
                     })
                     .collect_view()}
             </div>
+            <hr class="w-48 h-px mx-auto my-2 bg-light-blue border-0 rounded-sm" />
         </nav>
     }
 }
