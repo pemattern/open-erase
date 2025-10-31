@@ -1,22 +1,27 @@
 use leptos::prelude::*;
 use leptos_router::{components::*, path};
 
-use crate::{login::Login, navbar::NavBar};
+use crate::{
+    login::{AuthProvider, Login},
+    navbar::NavBar,
+};
 
 #[component]
 pub fn App() -> impl IntoView {
     view! {
-        <div class="flex bg-light-gray">
-            <Router>
-                <NavBar/>
-                <main class="w-full rounded-md bg-white p-4 m-4">
-                    <Routes fallback=NotFound>
-                        <Route path=path!("") view=Home/>
-                        <Route path=path!("login") view=Login/>
-                    </Routes>
-                </main>
-            </Router>
-        </div>
+        <AuthProvider>
+            <div class="flex bg-light-gray">
+                <Router>
+                    <NavBar/>
+                    <main class="w-full rounded-md bg-white p-4 m-4">
+                        <Routes fallback=NotFound>
+                            <Route path=path!("") view=Home/>
+                            <Route path=path!("login") view=Login/>
+                        </Routes>
+                    </main>
+                </Router>
+            </div>
+        </AuthProvider>
     }
 }
 

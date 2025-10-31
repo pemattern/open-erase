@@ -15,34 +15,58 @@ fn Logo() -> impl IntoView {
 }
 
 struct NavBarData {
+    groups: &'static [NavBarGroupData],
+}
+
+struct NavBarGroupData {
+    header: &'static str,
+    entries: &'static [NavBarEntryData],
+}
+
+struct NavBarEntryData {
     path: &'static str,
     text: &'static str,
     icon: icondata::Icon,
 }
 
-impl NavBarData {
+impl NavBarEntryData {
     const fn new(path: &'static str, text: &'static str, icon: icondata::Icon) -> Self {
         Self { path, text, icon }
     }
 }
 
-const NAVBAR_DATA: &[NavBarData] = &[
-    NavBarData::new("/", "Home", icondata::OcHomeLg),
-    NavBarData::new("/reports", "Reports", icondata::OcRepoLg),
-    NavBarData::new("/images", "Images", icondata::OcImageLg),
-];
+const NAVBAR_DATA: NavBarData = NavBarData {
+    groups: &[NAVBAR_HOME_GROUP_DATA, NAVBAR_HOME_SETTINGS_DATA],
+};
+
+const NAVBAR_HOME_GROUP_DATA: NavBarGroupData = NavBarGroupData {
+    header: "Home",
+    entries: &[
+        NavBarEntryData::new("/", "Home", icondata::OcHomeLg),
+        NavBarEntryData::new("/reports", "Reports", icondata::OcRepoLg),
+        NavBarEntryData::new("/images", "Images", icondata::OcImageLg),
+    ],
+};
+
+const NAVBAR_HOME_SETTINGS_DATA: NavBarGroupData = NavBarGroupData {
+    header: "Settings",
+    entries: &[
+        NavBarEntryData::new("/user_settings", "Settings", icondata::OcGearLg),
+        NavBarEntryData::new("/admin_dashboard", "Dashboard", icondata::OcGlobeLg),
+    ],
+};
 
 #[component]
 pub fn NavBar() -> impl IntoView {
     view! {
         <nav class="w-72 h-screen">
             <Logo/>
-            <hr class="w-48 h-px mx-auto mb-2 bg-light-blue border-0 rounded-sm" />
             <div class="flex flex-col gap-y-2 pl-4 pr-2">
                 {NAVBAR_DATA
+                    .groups
                     .iter()
-                    .map(|item| view! {
-                            <NavBarEntry data=item/>
+                    .map(|group| view! {
+                        <NavBarGroup data=group/>
                     })
                     .collect_view()}
             </div>
@@ -52,7 +76,25 @@ pub fn NavBar() -> impl IntoView {
 }
 
 #[component]
-fn NavBarEntry(data: &'static NavBarData) -> impl IntoView {
+fn NavBarGroup(data: &'static NavBarGroupData) -> impl IntoView {
+    view! {
+        <hr class="w-48 h-px mx-auto mb-2 bg-light-blue border-0 rounded-sm" />
+        <div class="pl-4">
+            <div class="pb-1 text-sm text-gray">{data.header}</div>
+            <div class="flex flex-col gap-y-2 pr-2">
+                {data.entries
+                    .iter()
+                    .map(|entry| view! {
+                        <NavBarEntry data=entry/>
+                    })
+                    .collect_view()}
+            </div>
+        </div>
+    }
+}
+
+#[component]
+fn NavBarEntry(data: &'static NavBarEntryData) -> impl IntoView {
     let location = use_location();
     let is_current = move || location.pathname.get() == data.path;
 
