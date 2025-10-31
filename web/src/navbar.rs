@@ -6,7 +6,7 @@ use leptos_router::{components::A, hooks::use_location};
 fn Logo() -> impl IntoView {
     view! {
         <A href="/">
-            <div class="flex font-mono text-4xl pb-4">
+            <div class="flex text-2xl p-4">
                 <div class="text-dark-blue">open</div>
                 <div class="dark-gray">erase</div>
             </div>
@@ -27,22 +27,24 @@ impl NavBarData {
 }
 
 const NAVBAR_DATA: &[NavBarData] = &[
-    NavBarData::new("/", "Home", icondata::FaHouseSolid),
-    NavBarData::new("/reports", "Reports", icondata::FaClipboardSolid),
-    NavBarData::new("/images", "Images", icondata::FaImageSolid),
+    NavBarData::new("/", "Home", icondata::OcHomeLg),
+    NavBarData::new("/reports", "Reports", icondata::OcRepoLg),
+    NavBarData::new("/images", "Images", icondata::OcImageLg),
 ];
 
 #[component]
 pub fn NavBar() -> impl IntoView {
     view! {
-        <nav class="flex-col w-72 h-screen p-4">
+        <nav class="w-72 h-screen">
             <Logo/>
-            {NAVBAR_DATA
-                .iter()
-                .map(|item| view! {
-                        <NavBarEntry data=item/>
-                })
-                .collect_view()}
+            <div class="flex flex-col gap-y-2 pl-4 pr-2">
+                {NAVBAR_DATA
+                    .iter()
+                    .map(|item| view! {
+                            <NavBarEntry data=item/>
+                    })
+                    .collect_view()}
+            </div>
         </nav>
     }
 }
@@ -53,11 +55,17 @@ fn NavBarEntry(data: &'static NavBarData) -> impl IntoView {
     let is_current = move || location.pathname.get() == data.path;
 
     view! {
-        <div class=(["bg-light-blue", "text-dark-blue", "rounded-md", "bold"], move || is_current())>
-            <div class="p-4 w-fit text-lg">
+        <div class="border-1 rounded-md text-md outline-2 outline-offset-2"
+            class:bg-white=move || is_current()
+            class:border-light-blue=move || is_current()
+            class:border-transparent=move || !is_current()
+            class:outline-blue=move || is_current()
+            class:outline-transparent=move || !is_current()
+            class:shadow-xl=move || is_current()>
+            <div class="p-2 w-fit">
                 <A href=data.path>
                     <div class="ml-2 flex items-center gap-4">
-                        <Icon icon={data.icon} />
+                        <Icon icon={data.icon}/>
                         {data.text}
                     </div>
                 </A>
