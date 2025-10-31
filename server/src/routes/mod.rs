@@ -53,9 +53,10 @@ pub fn app(state: AppState) -> Router {
                             tower_http::trace::DefaultOnResponse::new().level(Level::INFO),
                         ),
                 )
+                // so far from testing brotli + default quality is best performer
                 .layer(
                     CompressionLayer::new()
-                        .quality(CompressionLevel::Best)
+                        .quality(CompressionLevel::Default)
                         .br(true)
                         .no_gzip()
                         .no_deflate()
