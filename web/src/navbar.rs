@@ -61,6 +61,7 @@ pub fn NavBar() -> impl IntoView {
     view! {
         <nav class="w-72 h-screen">
             <Logo/>
+            <hr class="w-48 h-px mx-auto my-2 bg-light-blue border-0 rounded-sm" />
             <div class="flex flex-col gap-y-2 pl-4 pr-2">
                 {NAVBAR_DATA
                     .groups
@@ -70,7 +71,6 @@ pub fn NavBar() -> impl IntoView {
                     })
                     .collect_view()}
             </div>
-            <hr class="w-48 h-px mx-auto my-2 bg-light-blue border-0 rounded-sm" />
         </nav>
     }
 }
@@ -78,7 +78,6 @@ pub fn NavBar() -> impl IntoView {
 #[component]
 fn NavBarGroup(data: &'static NavBarGroupData) -> impl IntoView {
     view! {
-        <hr class="w-48 h-px mx-auto mb-2 bg-light-blue border-0 rounded-sm" />
         <div class="pl-4">
             <div class="pb-1 text-sm text-gray">{data.header}</div>
             <div class="flex flex-col gap-y-2 pr-2">
@@ -99,21 +98,19 @@ fn NavBarEntry(data: &'static NavBarEntryData) -> impl IntoView {
     let is_current = move || location.pathname.get() == data.path;
 
     view! {
-        <div class="border-1 rounded-md text-md outline-2 outline-offset-2"
-            class:bg-white=move || is_current()
-            class:border-light-blue=move || is_current()
-            class:border-transparent=move || !is_current()
-            class:outline-blue=move || is_current()
-            class:outline-transparent=move || !is_current()
-            class:shadow-xl=move || is_current()>
-            <div class="p-2 w-fit">
-                <A href=data.path>
-                    <div class="ml-2 flex items-center gap-4">
-                        <Icon icon={data.icon}/>
-                        {data.text}
-                    </div>
-                </A>
+        <A href=data.path>
+            <div class="border-1 rounded-md text-md outline-2 outline-offset-2 hover:bg-white hover:border-light-blue"
+                class:bg-white=move || is_current()
+                class:border-light-blue=move || is_current()
+                class:border-transparent=move || !is_current()
+                class:outline-blue=move || is_current()
+                class:outline-transparent=move || !is_current()
+                class:shadow-xl=move || is_current()>
+                <div class="flex items-center w-fit p-2 ml-2 gap-4">
+                            <Icon icon={data.icon}/>
+                            {data.text}
+                </div>
             </div>
-        </div>
+        </A>
     }
 }
