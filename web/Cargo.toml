@@ -9,5 +9,5 @@ console_error_panic_hook = "0.1.7"
 icondata = "0.6.0"
 leptos = { version = "0.8.12", features = ["csr"] }
 leptos_icons = "0.7.0"
-leptos_router = { version = "0.8.8", features = ["tracing"] }
+leptos_router = { version = "0.8.9", features = ["tracing"] }
 wasm-bindgen = "=0.2.100"
