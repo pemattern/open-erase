@@ -1,20 +1,49 @@
-use leptos::prelude::*;
-use leptos_router::components::Form;
-use open_erase_lib::schemas::token::LoginResponse;
+use std::sync::LazyLock;
 
-async fn get_access_token(email: String, password: String) -> Result<LoginResponse, String> {
-    Err(String::from("nope"))
+use leptos::prelude::*;
+use open_erase_lib::schemas::token::LoginResponse;
+use reqwest::Client;
+
+static CLIENT: LazyLock<Client> = LazyLock::new(Client::new);
+
+async fn get_access_token(
+    email: String,
+    password: String,
+) -> Result<LoginResponse, reqwest::Error> {
+    CLIENT
+        .post("/api/auth/login")
+        .basic_auth(email, Some(password))
+        .send()
+        .await?
+        .json::<LoginResponse>()
+        .await
 }
 
 #[component]
 pub fn Login() -> impl IntoView {
+    let auth_context = use_context::<AuthContext>().unwrap();
+    let email = RwSignal::new(String::default());
+    let password = RwSignal::new(String::default());
+
     view! {
         <div>
             "Login:"
-            <Form method="POST" action="">
-                <input />
-                <input />
-            </Form>
+            <form
+                on:submit=move |ev| {
+                    ev.prevent_default();
+                    auth_context.login.dispatch((email.get(), password.get()));
+                }
+            >
+                <input type="email"
+                    bind:value=email
+                />
+                <input type="password"
+                    bind:value=password
+                />
+                <button type="submit">
+                    Login
+                </button>
+            </form>
         </div>
     }
 }
@@ -27,7 +56,7 @@ pub struct User {
 #[derive(Clone)]
 pub struct AuthContext {
     pub user: RwSignal<Option<User>>,
-    pub login: Action<(String, String), Result<LoginResponse, String>>,
+    pub login: Action<(String, String), Result<LoginResponse, reqwest::Error>>,
     pub logout: Action<(), Result<(), String>>,
 }
 
