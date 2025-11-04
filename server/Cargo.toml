@@ -4,6 +4,10 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+# local dependencies
+open-erase-lib = { path = "../lib", features = ["schemas"] }
+
+# public dependencies
 argon2 = "0.5.3"
 async-trait = "0.1.89"
 axum = { version = "0.8.6", features = ["macros"] }

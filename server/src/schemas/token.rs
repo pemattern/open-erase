@@ -2,29 +2,22 @@ use axum::{
     http::{StatusCode, header},
     response::{IntoResponse, Response},
 };
+use open_erase_lib::schemas::token::{LoginResponse, RefreshResponse};
 use serde::Serialize;
 
 use crate::{middleware::auth::REFRESH_TOKEN_COOKIE, schemas::json};
 
 #[derive(Serialize)]
-pub struct LoginResponse {
-    pub access_token: String,
-    pub refresh_token: String,
-    pub token_type: String,
-}
+#[serde(transparent)]
+pub struct ServerLoginResponse(pub LoginResponse);
 
-impl LoginResponse {
+impl ServerLoginResponse {
     pub fn new(access_token: String, refresh_token: String) -> Self {
-        let token_type = String::from("Bearer");
-        Self {
-            access_token,
-            refresh_token,
-            token_type,
-        }
+        Self(LoginResponse::new(access_token, refresh_token))
     }
 }
 
-impl IntoResponse for LoginResponse {
+impl IntoResponse for ServerLoginResponse {
     fn into_response(self) -> Response {
         (
             StatusCode::OK,
@@ -33,7 +26,7 @@ impl IntoResponse for LoginResponse {
                 (header::PRAGMA, "no-cache"),
                 (
                     header::SET_COOKIE,
-                    &set_refresh_token_cookie(&self.refresh_token),
+                    &set_refresh_token_cookie(&self.0.refresh_token),
                 ),
             ],
             json(self),
@@ -43,24 +36,16 @@ impl IntoResponse for LoginResponse {
 }
 
 #[derive(Serialize)]
-pub struct RefreshResponse {
-    pub access_token: String,
-    pub refresh_token: String,
-    pub token_type: String,
-}
+#[serde(transparent)]
+pub struct ServerRefreshResponse(pub RefreshResponse);
 
-impl RefreshResponse {
+impl ServerRefreshResponse {
     pub fn new(access_token: String, refresh_token: String) -> Self {
-        let token_type = String::from("Bearer");
-        Self {
-            access_token,
-            refresh_token,
-            token_type,
-        }
+        Self(RefreshResponse::new(access_token, refresh_token))
     }
 }
 
-impl IntoResponse for RefreshResponse {
+impl IntoResponse for ServerRefreshResponse {
     fn into_response(self) -> Response {
         (
             StatusCode::OK,
@@ -69,7 +54,7 @@ impl IntoResponse for RefreshResponse {
                 (header::PRAGMA, "no-cache"),
                 (
                     header::SET_COOKIE,
-                    &set_refresh_token_cookie(&self.refresh_token),
+                    &set_refresh_token_cookie(&self.0.refresh_token),
                 ),
             ],
             json(self),
@@ -92,9 +77,9 @@ fn reset_refresh_token_cookie() -> String {
 }
 
 #[derive(Serialize)]
-pub struct LogoutResponse;
+pub struct ServerLogoutResponse;
 
-impl IntoResponse for LogoutResponse {
+impl IntoResponse for ServerLogoutResponse {
     fn into_response(self) -> Response {
         (
             StatusCode::OK,

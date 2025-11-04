@@ -7,8 +7,8 @@ use uuid::Uuid;
 use crate::{
     error::{AppResult, ClientError},
     schemas::user::{
-        DeleteUserResponse, GetUserResponse, PatchUserRequest, PatchUserResponse, PostUserRequest,
-        PostUserResponse,
+        ServerDeleteUserResponse, ServerGetUserResponse, ServerPatchUserRequest,
+        ServerPatchUserResponse, ServerPostUserRequest, ServerPostUserResponse,
     },
     state::AppState,
 };
@@ -16,11 +16,11 @@ use crate::{
 #[axum::debug_handler]
 pub async fn get_user(
     State(state): State<AppState>,
-    Path(uuid): Path<Uuid>,
-) -> AppResult<GetUserResponse> {
+    Path(id): Path<Uuid>,
+) -> AppResult<ServerGetUserResponse> {
     let user = state
         .user_service
-        .find_user_by_id(uuid)
+        .find_user_by_id(id)
         .await?
         .ok_or(ClientError::NotFound)?;
     Ok(user.into())
@@ -29,31 +29,27 @@ pub async fn get_user(
 #[axum::debug_handler]
 pub async fn post_user(
     State(state): State<AppState>,
-    Json(user): Json<PostUserRequest>,
-) -> AppResult<PostUserResponse> {
-    // TODO hash password
-    let user = state
-        .user_service
-        .create_user(user.email, user.password)
-        .await?;
+    Json(user): Json<ServerPostUserRequest>,
+) -> AppResult<ServerPostUserResponse> {
+    let user = state.user_service.create_user(user).await?;
     Ok(user.into())
 }
 
 #[axum::debug_handler]
 pub async fn patch_user(
     State(state): State<AppState>,
-    Path(uuid): Path<Uuid>,
-    Json(user): Json<PatchUserRequest>,
-) -> AppResult<PatchUserResponse> {
-    let user = state.user_service.update_user(uuid, user.email).await?;
+    Path(id): Path<Uuid>,
+    Json(user): Json<ServerPatchUserRequest>,
+) -> AppResult<ServerPatchUserResponse> {
+    let user = state.user_service.update_user(id, user).await?;
     Ok(user.into())
 }
 
 #[axum::debug_handler]
 pub async fn delete_user(
     State(state): State<AppState>,
-    Path(uuid): Path<Uuid>,
-) -> AppResult<DeleteUserResponse> {
-    let user = state.user_service.delete_user(uuid).await?;
+    Path(id): Path<Uuid>,
+) -> AppResult<ServerDeleteUserResponse> {
+    let user = state.user_service.delete_user(id).await?;
     Ok(user.into())
 }

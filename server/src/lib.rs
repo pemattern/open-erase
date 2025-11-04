@@ -28,13 +28,11 @@ pub async fn bootstrap() -> Result<(), Box<dyn std::error::Error>> {
 mod tests {
     use axum::{body::Body, extract::Request, http::StatusCode};
     use base64::{Engine, prelude::BASE64_STANDARD};
+    use open_erase_lib::schemas::user::PostUserRequest;
     use tower::ServiceExt;
     use uuid::Uuid;
 
-    use crate::{
-        models::User, routes, schemas::user::PostUserRequest, state::AppState,
-        test_helpers::test_request,
-    };
+    use crate::{models::User, routes, state::AppState, test_helpers::test_request};
 
     #[tokio::test]
     async fn valid_login() {

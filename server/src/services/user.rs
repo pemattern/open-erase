@@ -2,7 +2,12 @@ use std::sync::Arc;
 
 use uuid::Uuid;
 
-use crate::{error::ServiceResult, models::User, repositories::user::UserRepository};
+use crate::{
+    error::ServiceResult,
+    models::User,
+    repositories::user::UserRepository,
+    schemas::user::{ServerPatchUserRequest, ServerPostUserRequest},
+};
 
 #[derive(Clone)]
 pub struct UserService {
@@ -24,15 +29,20 @@ impl UserService {
         Ok(self.user_repository.find_by_email(email).await?)
     }
 
-    pub async fn create_user(&self, email: String, password_hash: String) -> ServiceResult<User> {
-        Ok(self.user_repository.create(email, password_hash).await?)
+    pub async fn create_user(&self, user: ServerPostUserRequest) -> ServiceResult<User> {
+        // TODO: Hash Password
+        let password_hash = user.0.password;
+        Ok(self
+            .user_repository
+            .create(user.0.email, password_hash)
+            .await?)
     }
 
-    pub async fn update_user(&self, id: Uuid, email: Option<String>) -> ServiceResult<User> {
-        Ok(self.user_repository.update(id, email).await?)
+    pub async fn update_user(&self, id: Uuid, user: ServerPatchUserRequest) -> ServiceResult<User> {
+        Ok(self.user_repository.update(id, user.0.email).await?)
     }
 
-    pub async fn delete_user(&self, uuid: Uuid) -> ServiceResult<User> {
-        Ok(self.user_repository.delete(uuid).await?)
+    pub async fn delete_user(&self, id: Uuid) -> ServiceResult<User> {
+        Ok(self.user_repository.delete(id).await?)
     }
 }

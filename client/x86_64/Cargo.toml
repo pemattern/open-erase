@@ -4,12 +4,13 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+open-erase-lib = { path = "../../lib", features = ["audit"] }
+
 clap = { version = "4.5.51", default-features = false, features = [
   "cargo",
   "derive",
   "std",
 ] }
-open-erase-lib.workspace = true
 ratatui = { version = "0.29.0", default-features = false, features = [
   "termion",
 ] }

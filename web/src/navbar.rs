@@ -6,7 +6,7 @@ use leptos_router::{components::A, hooks::use_location};
 fn Logo() -> impl IntoView {
     view! {
         <A href="/">
-            <div class="flex text-2xl p-4">
+            <div class="flex justify-center text-2xl p-4">
                 <div class="text-dark-blue">open</div>
                 <div class="dark-gray">erase</div>
             </div>
@@ -61,7 +61,6 @@ pub fn NavBar() -> impl IntoView {
     view! {
         <nav class="w-72 h-screen">
             <Logo/>
-            <hr class="w-48 h-px mx-auto my-2 bg-light-blue border-0 rounded-sm" />
             <div class="flex flex-col gap-y-2 pl-4 pr-2">
                 {NAVBAR_DATA
                     .groups

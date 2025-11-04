@@ -1,8 +1,8 @@
 use leptos::prelude::*;
-use leptos_router::{components::*, path};
+use leptos_router::{components::*, hooks::use_navigate, path};
 
 use crate::{
-    login::{AuthProvider, Login},
+    login::{AuthContext, AuthProvider, Login},
     navbar::NavBar,
 };
 
@@ -12,16 +12,31 @@ pub fn App() -> impl IntoView {
         <AuthProvider>
             <div class="flex bg-light-gray">
                 <Router>
-                    <NavBar/>
-                    <main class="w-full rounded-md bg-white p-4 m-4">
-                        <Routes fallback=NotFound>
+                    <Routes fallback=NotFound>
+                        <Route path=path!("login") view=Login/>
+                        <ParentRoute path=path!("") view=AppLayout>
                             <Route path=path!("") view=Home/>
-                            <Route path=path!("login") view=Login/>
-                        </Routes>
-                    </main>
+                        </ParentRoute>
+                    </Routes>
                 </Router>
             </div>
         </AuthProvider>
+    }
+}
+
+#[component]
+pub fn AppLayout() -> impl IntoView {
+    let navigate = use_navigate();
+    let auth_context = use_context::<AuthContext>().unwrap();
+    if auth_context.user.get().is_none() {
+        navigate("/login", Default::default());
+    }
+    view! {
+
+        <NavBar/>
+        <main class="w-full rounded-md bg-white p-4 m-4">
+            <Outlet/>
+        </main>
     }
 }
 

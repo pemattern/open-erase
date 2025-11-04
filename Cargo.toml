@@ -3,4 +3,3 @@ resolver = "2"
 members = ["client/x86_64", "lib", "server", "web"]
 
 [workspace.dependencies]
-open-erase-lib = { path = "lib" }
