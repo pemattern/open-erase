@@ -63,6 +63,7 @@ pub struct AuthContext {
 #[component]
 pub fn AuthProvider(children: Children) -> impl IntoView {
     let user = RwSignal::new(None::<User>);
+    let access_token = LocalResource::new(move || get_access_token(email, password));
     let login = Action::new(|input: &(String, String)| {
         let input = input.clone();
         async move { get_access_token(input.0, input.1).await }
