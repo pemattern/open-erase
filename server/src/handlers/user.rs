@@ -1,5 +1,5 @@
 use axum::{
-    Json,
+    Extension, Json,
     extract::{Path, State},
 };
 use uuid::Uuid;
@@ -10,6 +10,7 @@ use crate::{
         ServerDeleteUserResponse, ServerGetUserResponse, ServerPatchUserRequest,
         ServerPatchUserResponse, ServerPostUserRequest, ServerPostUserResponse,
     },
+    services::auth::Claims,
     state::AppState,
 };
 
@@ -18,6 +19,20 @@ pub async fn get_user(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> AppResult<ServerGetUserResponse> {
+    let user = state
+        .user_service
+        .find_user_by_id(id)
+        .await?
+        .ok_or(ClientError::NotFound)?;
+    Ok(user.into())
+}
+
+#[axum::debug_handler]
+pub async fn get_me(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+) -> AppResult<ServerGetUserResponse> {
+    let id = Uuid::parse_str(&claims.sub).unwrap();
     let user = state
         .user_service
         .find_user_by_id(id)

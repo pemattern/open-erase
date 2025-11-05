@@ -10,16 +10,14 @@ use crate::{
 pub fn App() -> impl IntoView {
     view! {
         <AuthProvider>
-            <div class="flex bg-light-gray">
-                <Router>
-                    <Routes fallback=NotFound>
-                        <Route path=path!("login") view=Login/>
-                        <ParentRoute path=path!("") view=AppLayout>
-                            <Route path=path!("") view=Home/>
-                        </ParentRoute>
-                    </Routes>
-                </Router>
-            </div>
+            <Router>
+                <Routes fallback=NotFound>
+                    <Route path=path!("login") view=Login/>
+                    <ParentRoute path=path!("") view=AppLayout>
+                        <Route path=path!("") view=Home/>
+                    </ParentRoute>
+                </Routes>
+            </Router>
         </AuthProvider>
     }
 }
@@ -28,15 +26,20 @@ pub fn App() -> impl IntoView {
 pub fn AppLayout() -> impl IntoView {
     let navigate = use_navigate();
     let auth_context = use_context::<AuthContext>().unwrap();
-    if auth_context.user.get().is_none() {
-        navigate("/login", Default::default());
-    }
-    view! {
 
-        <NavBar/>
-        <main class="w-full rounded-md bg-white p-4 m-4">
-            <Outlet/>
-        </main>
+    Effect::new(move |_| {
+        if auth_context.user.get().is_none() {
+            navigate("/login", Default::default());
+        }
+    });
+
+    view! {
+        <div class="flex bg-light-gray">
+            <NavBar/>
+            <main class="w-full rounded-md bg-white p-4 m-4">
+                <Outlet/>
+            </main>
+        </div>
     }
 }
 
