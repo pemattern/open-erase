@@ -11,7 +11,6 @@ use tower_http::{
 };
 use tracing::Level;
 
-use crate::state::AppState;
 use crate::{
     error::{AppResult, ClientError},
     handlers::auth::refresh,
@@ -24,6 +23,7 @@ use crate::{
         log::log,
     },
 };
+use crate::{handlers::auth::logout, state::AppState};
 
 mod docs;
 mod user;
@@ -31,6 +31,7 @@ mod user;
 const API_PATH: &str = "/api";
 const AUTH_PATH: &str = "/auth";
 const LOGIN_PATH: &str = "/login";
+const LOGOUT_PATH: &str = "/logout";
 const REFRESH_PATH: &str = "/refresh";
 const USER_PATH: &str = "/user";
 
@@ -92,6 +93,7 @@ fn basic_auth_router(state: AppState) -> Router<AppState> {
 fn refresh_token_auth_router(state: AppState) -> Router<AppState> {
     Router::new()
         .route(REFRESH_PATH, post(refresh))
+        .route(LOGOUT_PATH, post(logout))
         .layer(middleware::from_fn_with_state(
             state,
             validate_refresh_token,

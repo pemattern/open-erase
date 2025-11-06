@@ -1,6 +1,7 @@
 use app::App;
 
 mod app;
+mod input;
 mod login;
 mod navbar;
 

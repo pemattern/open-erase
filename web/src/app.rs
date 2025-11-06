@@ -1,5 +1,5 @@
 use leptos::prelude::*;
-use leptos_router::{components::*, hooks::use_navigate, path};
+use leptos_router::{components::*, path};
 
 use crate::{
     login::{AuthContext, AuthProvider, Login},
@@ -9,34 +9,25 @@ use crate::{
 #[component]
 pub fn App() -> impl IntoView {
     view! {
-        <AuthProvider>
-            <Router>
+        <Router>
+            <AuthProvider>
                 <Routes fallback=NotFound>
                     <Route path=path!("login") view=Login/>
                     <ParentRoute path=path!("") view=AppLayout>
                         <Route path=path!("") view=Home/>
                     </ParentRoute>
                 </Routes>
-            </Router>
-        </AuthProvider>
+            </AuthProvider>
+        </Router>
     }
 }
 
 #[component]
 pub fn AppLayout() -> impl IntoView {
-    let navigate = use_navigate();
-    let auth_context = use_context::<AuthContext>().unwrap();
-
-    Effect::new(move |_| {
-        if auth_context.user.get().is_none() {
-            navigate("/login", Default::default());
-        }
-    });
-
     view! {
         <div class="flex bg-light-gray">
             <NavBar/>
-            <main class="w-full rounded-md bg-white p-4 m-4">
+            <main class="w-full rounded-md bg-white p-4 m-4 shadow-xl">
                 <Outlet/>
             </main>
         </div>
@@ -45,7 +36,13 @@ pub fn AppLayout() -> impl IntoView {
 
 #[component]
 pub fn Home() -> impl IntoView {
+    let auth_context = use_context::<AuthContext>().unwrap();
     view! {
+        <button on:click=move |_| {
+            auth_context.logout.dispatch(());
+        }>
+            Logout
+        </button>
         <div>"Hello World!"</div>
     }
 }

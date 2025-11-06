@@ -3,7 +3,7 @@ use leptos_icons::Icon;
 use leptos_router::{components::A, hooks::use_location};
 
 #[component]
-fn Logo() -> impl IntoView {
+pub fn Logo() -> impl IntoView {
     view! {
         <A href="/">
             <div class="flex justify-center text-2xl p-4">
@@ -78,7 +78,7 @@ pub fn NavBar() -> impl IntoView {
 fn NavBarGroup(data: &'static NavBarGroupData) -> impl IntoView {
     view! {
         <div class="pl-4">
-            <div class="pb-1 text-sm text-gray">{data.header}</div>
+            <div class="pb-1 text-sm text-dark-gray">{data.header}</div>
             <div class="flex flex-col gap-y-2 pr-2">
                 {data.entries
                     .iter()
@@ -98,16 +98,16 @@ fn NavBarEntry(data: &'static NavBarEntryData) -> impl IntoView {
 
     view! {
         <A href=data.path>
-            <div class="border-1 rounded-md text-md outline-2 outline-offset-2 hover:bg-white hover:border-light-blue"
+            <div class="border-1 rounded-md text-md outline-2 outline-offset-2 hover:bg-white hover:border-gray hover:bg-white focus:border-gray focus:outline-transparent"
                 class:bg-white=move || is_current()
-                class:border-light-blue=move || is_current()
+                class:border-gray=move || is_current()
                 class:border-transparent=move || !is_current()
                 class:outline-blue=move || is_current()
                 class:outline-transparent=move || !is_current()
                 class:shadow-xl=move || is_current()>
                 <div class="flex items-center w-fit p-2 ml-2 gap-4">
-                            <Icon icon={data.icon}/>
-                            {data.text}
+                    <Icon icon={data.icon}/>
+                    {data.text}
                 </div>
             </div>
         </A>

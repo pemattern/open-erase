@@ -42,10 +42,9 @@ pub async fn refresh(
 #[utoipa::path(post, path = "/auth/logout")]
 pub async fn logout(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
     Extension(refresh_token): Extension<RefreshToken>,
 ) -> AppResult<ServerLogoutResponse> {
-    let refresh_token = state
+    let _ = state
         .auth_service
         .mark_refresh_token_as_used(&refresh_token)
         .await?;

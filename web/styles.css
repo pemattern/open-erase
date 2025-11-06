@@ -4,13 +4,12 @@
   --color-*: initial;
   --color-white: #ffffff;
   --color-black: #3a3a3a;
-  --color-dark-gray: #1b1e22;
-  --color-gray: #777777;
-  --color-light-gray: #f8f8f8;
-  --color-light-blue: #ecedf7;
-  --color-blue: #accbfa;
+  --color-dark-gray: #3d3f44;
+  --color-gray: #dddddd;
+  --color-light-gray: #f8f8fe;
   --color-dark-blue: #4250af;
-
+  --color-blue: #accbfa;
+  --color-light-blue: #bddcff;
   --font-sans: 'Inter', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 }
