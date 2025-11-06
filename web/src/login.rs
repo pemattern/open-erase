@@ -71,12 +71,12 @@ pub fn Login() -> impl IntoView {
                     bind=password
                     label="Password"
                 />
-                <div class="flex justify-end text-xs text-dark-blue hover:text-blue">
-                    <A href="/">
+                <div class="flex justify-end text-xs text-dark-blue hover:underline">
+                    <a href="/" class="rounded-sm">
                         "Forgot your password?"
-                    </A>
+                    </a>
                 </div>
-                <input class="mt-1 text-dark-gray cursor-pointer py-1 bg-blue rounded-sm hover:bg-light-blue focus:outline-2 outline-offset-2 outline-blue focus:shadow-xl"
+                <input class="mt-1 text-dark-gray cursor-pointer py-1 bg-blue rounded-sm hover:bg-light-blue"
                     type="submit"
                     value="Submit"
                 />

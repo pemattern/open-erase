@@ -21,7 +21,7 @@ pub fn Input(
                 type=ty
                 placeholder=placeholder
                 bind:value=bind
-                class="mt-1 px-2 py-1 border border-gray focus:shadow-xl focus:outline-2 outline-offset-2 outline-blue rounded-sm"
+                class="mt-1 px-2 py-1 border border-gray rounded-md"
             />
         </div>
     }
