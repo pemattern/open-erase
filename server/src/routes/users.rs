@@ -1,5 +1,5 @@
 use crate::{
-    handlers::user::{delete_user, get_me, get_user, patch_user, post_user},
+    handlers::users::{delete_user, get_me, get_user, patch_user, post_user},
     state::AppState,
 };
 use axum::{

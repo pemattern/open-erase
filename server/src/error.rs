@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{io, sync::Arc};
 
 use axum::{
     body::Body,
@@ -104,12 +104,19 @@ impl From<serde_json::Error> for ServiceError {
 #[derive(Debug)]
 pub enum RepositoryError {
     Sqlx(sqlx::Error),
+    Fs(io::Error),
     Test,
 }
 
 impl From<sqlx::Error> for RepositoryError {
     fn from(value: sqlx::Error) -> Self {
         Self::Sqlx(value)
+    }
+}
+
+impl From<io::Error> for RepositoryError {
+    fn from(value: io::Error) -> Self {
+        Self::Fs(value)
     }
 }
 

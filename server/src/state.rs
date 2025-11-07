@@ -4,12 +4,13 @@ use sqlx::postgres::PgPoolOptions;
 
 use crate::{
     repositories::{refresh_token::PostgresRefreshTokenRepository, user::PostgresUserRepository},
-    services::{auth::AuthService, user::UserService},
+    services::{auth::AuthService, image::ImageService, user::UserService},
 };
 
 #[derive(Clone)]
 pub struct AppState {
     pub auth_service: AuthService,
+    pub image_service: ImageService,
     pub user_service: UserService,
 }
 
@@ -20,11 +21,14 @@ impl AppState {
         sqlx::migrate!("./migrations").run(&pool).await?;
         let user_repository = Arc::new(PostgresUserRepository::new(pool.clone()));
         let refresh_token_repository = Arc::new(PostgresRefreshTokenRepository::new(pool.clone()));
+        let image_repository = Arc::new(crate::repositories::image::FsImageRepository);
         let auth_service =
             AuthService::new(user_repository.clone(), refresh_token_repository.clone());
+        let image_service = ImageService::new(image_repository.clone());
         let user_service = UserService::new(user_repository.clone());
         Ok(Self {
             auth_service,
+            image_service,
             user_service,
         })
     }
@@ -45,11 +49,14 @@ impl AppState {
         let user_repository = Arc::new(crate::repositories::mocks::MockUserRepository::new());
         let refresh_token_repository =
             Arc::new(crate::repositories::mocks::MockRefreshTokenRepository::new());
+        let image_repository = Arc::new(crate::repositories::image::FsImageRepository);
         let auth_service =
             AuthService::new(user_repository.clone(), refresh_token_repository.clone());
         let user_service = UserService::new(user_repository.clone());
+        let image_service = ImageService::new(image_repository.clone());
         Self {
             auth_service,
+            image_service,
             user_service,
         }
     }

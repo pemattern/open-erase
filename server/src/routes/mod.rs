@@ -26,14 +26,16 @@ use crate::{
 use crate::{handlers::auth::logout, state::AppState};
 
 mod docs;
-mod user;
+mod images;
+mod users;
 
 const API_PATH: &str = "/api";
 const AUTH_PATH: &str = "/auth";
+const IMAGES_PATH: &str = "/images";
 const LOGIN_PATH: &str = "/login";
 const LOGOUT_PATH: &str = "/logout";
 const REFRESH_PATH: &str = "/refresh";
-const USER_PATH: &str = "/user";
+const USERS_PATH: &str = "/users";
 
 const STATIC_ASSETS_PATH: &str = "/dist";
 const INDEX_HTML_PATH: &str = "/dist/index.html";
@@ -102,7 +104,8 @@ fn refresh_token_auth_router(state: AppState) -> Router<AppState> {
 
 fn access_token_auth_router(state: AppState) -> Router<AppState> {
     Router::new()
-        .nest(USER_PATH, user::router())
+        .nest(USERS_PATH, users::router())
+        .nest(IMAGES_PATH, images::router())
         .layer(middleware::from_fn_with_state(state, validate_access_token))
 }
 

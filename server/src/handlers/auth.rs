@@ -4,7 +4,6 @@ use crate::{
     error::AppResult,
     models::{RefreshToken, User},
     schemas::token::{ServerLoginResponse, ServerLogoutResponse, ServerRefreshResponse},
-    services::auth::Claims,
     state::AppState,
 };
 

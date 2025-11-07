@@ -2,6 +2,7 @@ use serde::Serialize;
 
 use crate::error::ServiceResult;
 
+pub mod image;
 pub mod token;
 pub mod user;
 
