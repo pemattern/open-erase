@@ -9,16 +9,34 @@ use crate::{
 #[component]
 pub fn App() -> impl IntoView {
     view! {
-        <Router>
-            <AuthProvider>
-                <Routes fallback=NotFound>
-                    <Route path=path!("login") view=Login/>
-                    <ParentRoute path=path!("") view=AppLayout>
-                        <Route path=path!("") view=Home/>
-                    </ParentRoute>
-                </Routes>
-            </AuthProvider>
-        </Router>
+        <AuthProvider>
+            <Router>
+                <AppRoutes/>
+            </Router>
+        </AuthProvider>
+    }
+}
+
+#[component]
+pub fn AppRoutes() -> impl IntoView {
+    let auth_context = use_context::<AuthContext>().unwrap();
+    let is_valid_user = move || Some(auth_context.user.get().is_some());
+
+    view! {
+        <Routes fallback=NotFound>
+            <Route path=path!("login") view=Login/>
+            <ProtectedParentRoute path=path!("")
+                view=AppLayout
+                condition=is_valid_user
+                redirect_path=|| "/login"
+            >
+                <Route path=path!("") view=Home/>
+                <Route path=path!("reports") view=Home/>
+                <Route path=path!("images") view=Home/>
+                <Route path=path!("user_settings") view=Home/>
+                <Route path=path!("admin_dashboard") view=Home/>
+            </ProtectedParentRoute>
+        </Routes>
     }
 }
 
@@ -53,5 +71,6 @@ pub fn NotFound() -> impl IntoView {
         <div>
             "We couldnt find the page youre looking for!"
         </div>
+        <a href="/">Go back</a>
     }
 }

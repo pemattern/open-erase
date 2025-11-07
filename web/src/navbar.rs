@@ -1,16 +1,14 @@
 use leptos::prelude::*;
 use leptos_icons::Icon;
-use leptos_router::{components::A, hooks::use_location};
+use leptos_router::hooks::use_location;
 
 #[component]
 pub fn Logo() -> impl IntoView {
     view! {
-        <A href="/">
-            <div class="flex justify-center text-2xl p-4">
-                <div class="text-dark-blue">open</div>
-                <div class="dark-gray">erase</div>
-            </div>
-        </A>
+        <a href="/" class="flex justify-center text-2xl m-4 rounded-md">
+            <div class="text-dark-blue">open</div>
+            <div class="dark-gray">erase</div>
+        </a>
     }
 }
 
@@ -97,19 +95,16 @@ fn NavBarEntry(data: &'static NavBarEntryData) -> impl IntoView {
     let is_current = move || location.pathname.get() == data.path;
 
     view! {
-        <A href=data.path>
-            <div class="border-1 rounded-md text-md outline-2 outline-offset-2 hover:bg-white hover:border-gray hover:bg-white focus:border-gray focus:outline-transparent"
-                class:bg-white=move || is_current()
-                class:border-gray=move || is_current()
-                class:border-transparent=move || !is_current()
-                class:outline-blue=move || is_current()
-                class:outline-transparent=move || !is_current()
-                class:shadow-xl=move || is_current()>
-                <div class="flex items-center w-fit p-2 ml-2 gap-4">
-                    <Icon icon={data.icon}/>
-                    {data.text}
-                </div>
+        <a href=data.path class="border-1 rounded-md text-md hover:bg-white hover:border-gray hover:bg-white"
+            class:bg-white=move || is_current()
+            class:border-gray=move || is_current()
+            class:border-transparent=move || !is_current()
+            class:shadow-xl=move || is_current()
+        >
+            <div class="flex items-center w-fit p-2 ml-2 gap-4">
+                <Icon icon={data.icon}/>
+                {data.text}
             </div>
-        </A>
+        </a>
     }
 }

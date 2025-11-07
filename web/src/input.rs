@@ -8,6 +8,7 @@ pub fn Input(
     ty: &'static str,
     #[prop(optional)] label: &'static str,
     #[prop(optional)] placeholder: &'static str,
+    #[prop(default = false)] autofocus: bool,
 ) -> impl IntoView {
     view! {
         <div class="flex flex-col">
@@ -22,6 +23,7 @@ pub fn Input(
                 placeholder=placeholder
                 bind:value=bind
                 class="mt-1 px-2 py-1 border border-gray rounded-md"
+                autofocus=autofocus
             />
         </div>
     }
