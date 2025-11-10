@@ -37,13 +37,12 @@ const LOGOUT_PATH: &str = "/logout";
 const REFRESH_PATH: &str = "/refresh";
 const USERS_PATH: &str = "/users";
 
-const STATIC_ASSETS_PATH: &str = "/dist";
-const INDEX_HTML_PATH: &str = "/dist/index.html";
+const STATIC_ASSETS_PATH: &str = "/web/dist";
+const INDEX_HTML_PATH: &str = "/web/dist/index.html";
 
 pub fn app(state: AppState) -> Router {
-    Router::new()
+    let router = Router::new()
         .merge(api_router(state.clone()))
-        .fallback_service(web_service())
         .method_not_allowed_fallback(method_not_allowed_fallback)
         .layer(
             ServiceBuilder::new()
@@ -68,7 +67,13 @@ pub fn app(state: AppState) -> Router {
                 .layer(TimeoutLayer::new(Duration::from_secs(5)))
                 .layer(middleware::from_fn(log)),
         )
-        .with_state(state)
+        .with_state(state);
+
+    #[cfg(not(debug_assertions))]
+    {
+        let router = router.fallback_service(web_service());
+    }
+    router
 }
 
 pub fn api_router(state: AppState) -> Router<AppState> {
@@ -109,6 +114,7 @@ fn access_token_auth_router(state: AppState) -> Router<AppState> {
         .layer(middleware::from_fn_with_state(state, validate_access_token))
 }
 
+#[cfg(not(debug_assertions))]
 fn web_service() -> ServeDir<ServeFile> {
     ServeDir::new(STATIC_ASSETS_PATH).fallback(ServeFile::new(INDEX_HTML_PATH))
 }

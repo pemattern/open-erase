@@ -26,7 +26,7 @@ async fn get_access_token(
 }
 
 async fn get_me(token: &str) -> Result<GetUserResponse, gloo_net::Error> {
-    Request::get("/api/user/me")
+    Request::get("/api/users/me")
         .header("Authorization", format!("Bearer {}", token).as_str())
         .send()
         .await?

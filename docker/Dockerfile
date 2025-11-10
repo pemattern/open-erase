@@ -1,4 +1,4 @@
-FROM rust:1.90.0 AS base
+FROM rust:1.91.0 AS base
 
 FROM base AS server-builder
 WORKDIR /server
