@@ -7,7 +7,7 @@ use tower_http::{
     compression::CompressionLayer,
     services::{ServeDir, ServeFile},
     timeout::TimeoutLayer,
-    trace::TraceLayer,
+    trace::{DefaultMakeSpan, DefaultOnRequest, DefaultOnResponse, TraceLayer},
 };
 use tracing::Level;
 
@@ -49,12 +49,9 @@ pub fn app(state: AppState) -> Router {
             ServiceBuilder::new()
                 .layer(
                     TraceLayer::new_for_http()
-                        .make_span_with(
-                            tower_http::trace::DefaultMakeSpan::new().level(Level::INFO),
-                        )
-                        .on_response(
-                            tower_http::trace::DefaultOnResponse::new().level(Level::INFO),
-                        ),
+                        .make_span_with(DefaultMakeSpan::new().level(Level::INFO))
+                        .on_request(DefaultOnRequest::new().level(Level::INFO))
+                        .on_response(DefaultOnResponse::new().level(Level::INFO)),
                 )
                 // so far from testing brotli + default quality is best performer
                 .layer(

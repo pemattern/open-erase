@@ -5,10 +5,12 @@ use leptos_router::hooks::use_location;
 #[component]
 pub fn Logo() -> impl IntoView {
     view! {
-        <a href="/" class="flex justify-center text-2xl m-4 rounded-md">
-            <div class="text-dark-blue">open</div>
-            <div class="dark-gray">erase</div>
-        </a>
+        <div class="flex justify-center">
+            <a href="/" class="text-2xl m-4 rounded-md">
+                <span class="text-dark-blue">open</span>
+                <span class="dark-gray">erase</span>
+            </a>
+        </div>
     }
 }
 
@@ -57,9 +59,9 @@ const NAVBAR_HOME_SETTINGS_DATA: NavBarGroupData = NavBarGroupData {
 #[component]
 pub fn NavBar() -> impl IntoView {
     view! {
-        <nav class="w-72 h-screen">
+        <nav class="w-64 h-screen">
             <Logo/>
-            <div class="flex flex-col gap-y-2 pl-4 pr-2">
+            <div class="flex flex-col gap-y-2">
                 {NAVBAR_DATA
                     .groups
                     .iter()
@@ -77,7 +79,7 @@ fn NavBarGroup(data: &'static NavBarGroupData) -> impl IntoView {
     view! {
         <div class="pl-4">
             <div class="pb-1 text-sm text-dark-gray">{data.header}</div>
-            <div class="flex flex-col gap-y-2 pr-2">
+            <div class="flex flex-col gap-y-2">
                 {data.entries
                     .iter()
                     .map(|entry| view! {
@@ -96,10 +98,10 @@ fn NavBarEntry(data: &'static NavBarEntryData) -> impl IntoView {
 
     view! {
         <a href=data.path class="border-1 rounded-md text-md hover:bg-white hover:border-gray hover:bg-white"
+            class:text-dark-blue=move || is_current()
             class:bg-white=move || is_current()
             class:border-gray=move || is_current()
             class:border-transparent=move || !is_current()
-            class:shadow-xl=move || is_current()
         >
             <div class="flex items-center w-fit p-2 ml-2 gap-4">
                 <Icon icon={data.icon}/>

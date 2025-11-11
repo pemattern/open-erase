@@ -2,6 +2,7 @@ use leptos::prelude::*;
 use leptos_router::{components::*, path};
 
 use crate::{
+    input::Input,
     login::{AuthContext, AuthProvider, Login},
     navbar::NavBar,
 };
@@ -45,10 +46,26 @@ pub fn AppLayout() -> impl IntoView {
     view! {
         <div class="flex bg-light-gray">
             <NavBar/>
-            <main class="w-full rounded-md bg-white p-4 m-4 shadow-xl">
-                <Outlet/>
-            </main>
+            <div class="w-full flex-1 flex flex-col">
+                <TopBar/>
+                <main class="rounded-md bg-white p-4 m-4 shadow-xl">
+                    <Outlet/>
+                </main>
+            </div>
         </div>
+    }
+}
+
+#[component]
+pub fn TopBar() -> impl IntoView {
+    view! {
+        <header class="flex pt-2 pl-4 pr-4">
+            <div class="flex-1/4 flex justify-end">
+                <button class="px-4 py-2 bg-blue rounded-md">
+                    Logout
+                </button>
+            </div>
+        </header>
     }
 }
 
