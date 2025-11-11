@@ -1,22 +1,22 @@
 name: open-erase
 services:
-  open-erase-server:
-    container_name: open-erase-server
-    image: open-erase-server
+  server:
+    container_name: server
+    image: server
     env_file: .env
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ../
+      dockerfile: docker/Dockerfile
     ports:
       - "3000:3000"
     volumes:
       - iso:/dist/iso
     restart: always
     depends_on:
-      - open-erase-db
+      - db
 
-  open-erase-db:
-    container_name: open-erase-db
+  db:
+    container_name: db
     image: postgres:18
     restart: always
     env_file: .env
@@ -33,19 +33,19 @@ services:
       timeout: 5s
       retries: 5
 
-  open-erase-iso-builder:
-    container_name: open-erase-iso-builder
-    image: open-erase-iso-builder
-    cap_add:
-      - SYS_ADMIN
-    stdin_open: true
-    build:
-      context: .
-      dockerfile: iso-builder.Dockerfile
-    volumes:
-      - iso:/iso/out
-    command: >
-      sh -c "ls -a && mkarchiso -v -w /tmp/archiso-tmp -o /iso/out /iso"
+  # iso-builder:
+  #   container_name: iso-builder
+  #   image: iso-builder
+  #   cap_add:
+  #     - SYS_ADMIN
+  #   stdin_open: true
+  #   build:
+  #     context: ../
+  #     dockerfile: docker/dev.iso.Dockerfile
+  #   volumes:
+  #     - iso:/iso/out
+  #   command: >
+  #     sh -c "ls -a && mkarchiso -v -w /tmp/archiso-tmp -o /iso/out /iso"
 
 volumes:
   db:
