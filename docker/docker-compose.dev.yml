@@ -9,11 +9,13 @@ services:
       dockerfile: docker/dev.backend.Dockerfile
     ports:
       - "3000:3000"
+    volumes:
+      - ../target:/server/target
+      - ~/.cargo/registry:/usr/local/cargo/registry
     restart: always
     depends_on:
       - db
 
-      
   web:
     container_name: web
     image: web
