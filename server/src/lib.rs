@@ -16,6 +16,7 @@ pub async fn bootstrap() -> Result<(), Box<dyn std::error::Error>> {
     let state = crate::state::AppState::postgres().await?;
     let app = routes::app(state);
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await?;
+    tracing::info!("server successfully started");
     axum::serve(
         listener,
         app.into_make_service_with_connect_info::<std::net::SocketAddr>(),
