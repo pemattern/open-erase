@@ -64,32 +64,37 @@ pub fn Login() -> impl IntoView {
     });
 
     view! {
-        <div class="flex items-center justify-center h-screen bg-light-gray">
-            <form class="flex flex-col p-4 rounded-lg gap-y-1 bg-white shadow-xl"
-                on:submit=on_submit
-            >
-                <Logo/>
-                <Input name="email"
-                    ty="text"
-                    bind=email
-                    label="Email"
-                    autofocus=true
-                />
-                <Input name="password"
-                    ty="password"
-                    bind=password
-                    label="Password"
-                />
-                <div class="flex justify-end text-xs text-dark-blue hover:underline">
-                    <a href="/" class="rounded-sm">
-                        "Forgot your password?"
-                    </a>
+
+        <div class="w-full h-full bg-[url('data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20width=%2220%22%20height=%2220%22%3E%3Cpath%20d=%22M0%200%20L20%200%22%20stroke=%22%23eee%22%20stroke-width=%221%22/%3E%3Cpath%20d=%22M0%200%20L0%2020%22%20stroke=%22%23eee%22%20stroke-width=%221%22/%3E%3C/svg%3E')]">
+            <div class="w-full h-full bg-radial from-transparent to-white">
+                <div class="flex items-center justify-center h-screen">
+                    <form class="flex flex-col p-4 rounded-lg gap-y-1 bg-white shadow-xl"
+                        on:submit=on_submit
+                    >
+                        <Logo/>
+                        <Input name="email"
+                            ty="text"
+                            bind=email
+                            label="Email"
+                            autofocus=true
+                        />
+                        <Input name="password"
+                            ty="password"
+                            bind=password
+                            label="Password"
+                        />
+                        <div class="flex justify-end text-xs text-dark-blue hover:underline">
+                            <a href="/" class="rounded-sm">
+                                "Forgot your password?"
+                            </a>
+                        </div>
+                        <input class="mt-1 text-dark-gray cursor-pointer py-1 bg-blue rounded-sm hover:bg-light-blue"
+                            type="submit"
+                            value="Submit"
+                        />
+                    </form>
                 </div>
-                <input class="mt-1 text-dark-gray cursor-pointer py-1 bg-blue rounded-sm hover:bg-light-blue"
-                    type="submit"
-                    value="Submit"
-                />
-            </form>
+            </div>
         </div>
     }
 }
