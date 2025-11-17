@@ -6,7 +6,7 @@ edition = "2024"
 [dependencies]
 open-erase-lib = { path = "../../lib", features = ["audit"] }
 
-clap = { version = "4.5.51", default-features = false, features = [
+clap = { version = "4.5.52", default-features = false, features = [
   "cargo",
   "derive",
   "std",
