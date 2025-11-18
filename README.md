@@ -14,3 +14,8 @@ then
 ```sql
 SELECT * FROM users;
 ```
+
+# Test
+```bash
+make dev
+```
