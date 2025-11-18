@@ -12,9 +12,9 @@ services:
     volumes:
       - ../server:/app/server
       - ../lib:/app/lib
-      - cargo-target:/app/server/target
+      # - cargo-target:/app/server/target
       - cargo-registry:/usr/local/cargo/registry
-    command: cargo run
+    command: bacon --headless run-long
     depends_on:
       - db
 
